@@ -29,7 +29,7 @@ struct NewsView: View {
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
-            .navigationTitle("News")
         }
+        .toolbar(.hidden, for: .navigationBar)
     }
 }

@@ -1,32 +1,11 @@
-//
-//  Finnet2000_iOSApp.swift
-//  Finnet2000-iOS
-//
-//  Created by Karaboğa on 10/24/25.
-//
-
 import SwiftUI
-import SwiftData
 
 @main
-struct Finnet2000_iOSApp: App {
-    var sharedModelContainer: ModelContainer = {
-        let schema = Schema([
-            Item.self,
-        ])
-        let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
-
-        do {
-            return try ModelContainer(for: schema, configurations: [modelConfiguration])
-        } catch {
-            fatalError("Could not create ModelContainer: \(error)")
-        }
-    }()
-
+struct MainApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            AppRootView()
         }
-        .modelContainer(sharedModelContainer)
     }
 }
+

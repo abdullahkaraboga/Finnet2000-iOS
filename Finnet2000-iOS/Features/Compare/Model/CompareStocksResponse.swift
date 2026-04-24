@@ -1,97 +1,93 @@
-// CompareStocksResponse.swift
 import Foundation
 
-// API, hisse kodunu key olarak kullanarak detayları döndürüyor.
+// MARK: - Root
 typealias CompareStocksResponse = [String: StockCompareDetail]
 
-// Tek bir hissenin karşılaştırma detayları
+// MARK: - StockCompareDetail
 struct StockCompareDetail: Decodable, Sendable {
     let name: String?
     let logo: String?
     let periodicalReturns: PeriodicalReturns?
     let momentumIndicators: MomentumIndicators?
     let riskParams: [RiskParam]?
+    let ratios: [String: [String: RatioDetail]]? // düzeltildi: nested dictionary
+    let datePriceList: DateValueList?            // düzeltildi
+    let dateReturnList: DateValueList?           // eklendi
+    let balanceSheet: [String: BalanceItem]?
+    let incomeStatement: [String: BalanceItem]?
+    let cashFlowStatement: [String: BalanceItem]?
+    let topHoldingFunds: [String: Double]?
+    let movingAverages: [String: MovingAverageItem]?
 
     private enum CodingKeys: String, CodingKey {
-        case name
-        case logo
-        case periodicalReturns
-        case momentumIndicators
-        case riskParams
+        case name, logo, periodicalReturns, momentumIndicators, riskParams,
+             ratios, datePriceList, dateReturnList,
+             balanceSheet, incomeStatement, cashFlowStatement,
+             topHoldingFunds, movingAverages
     }
 
-    // Ensure Decodable conformance is not actor-isolated
+    // Make Decodable conformance nonisolated to satisfy Sendable generic constraints
     nonisolated init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.name = try container.decodeIfPresent(String.self, forKey: .name)
-        self.logo = try container.decodeIfPresent(String.self, forKey: .logo)
-        self.periodicalReturns = try container.decodeIfPresent(PeriodicalReturns.self, forKey: .periodicalReturns)
-        self.momentumIndicators = try container.decodeIfPresent(MomentumIndicators.self, forKey: .momentumIndicators)
-        self.riskParams = try container.decodeIfPresent([RiskParam].self, forKey: .riskParams)
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        self.name = try c.decodeIfPresent(String.self, forKey: .name)
+        self.logo = try c.decodeIfPresent(String.self, forKey: .logo)
+        self.periodicalReturns = try c.decodeIfPresent(PeriodicalReturns.self, forKey: .periodicalReturns)
+        self.momentumIndicators = try c.decodeIfPresent(MomentumIndicators.self, forKey: .momentumIndicators)
+        self.riskParams = try c.decodeIfPresent([RiskParam].self, forKey: .riskParams)
+        self.ratios = try c.decodeIfPresent([String: [String: RatioDetail]].self, forKey: .ratios)
+        self.datePriceList = try c.decodeIfPresent(DateValueList.self, forKey: .datePriceList)
+        self.dateReturnList = try c.decodeIfPresent(DateValueList.self, forKey: .dateReturnList)
+        self.balanceSheet = try c.decodeIfPresent([String: BalanceItem].self, forKey: .balanceSheet)
+        self.incomeStatement = try c.decodeIfPresent([String: BalanceItem].self, forKey: .incomeStatement)
+        self.cashFlowStatement = try c.decodeIfPresent([String: BalanceItem].self, forKey: .cashFlowStatement)
+        self.topHoldingFunds = try c.decodeIfPresent([String: Double].self, forKey: .topHoldingFunds)
+        self.movingAverages = try c.decodeIfPresent([String: MovingAverageItem].self, forKey: .movingAverages)
     }
 }
 
-// Dönemsel getiriler
+// MARK: - DateValueList
+struct DateValueList: Decodable, Sendable {
+    let dates: [String]
+    let values: [Double]
+}
+
+// MARK: - PeriodicalReturns
 struct PeriodicalReturns: Decodable, Sendable {
-    let daily: Double
-    let weekly: Double
-    let monthly: Double
-
-    private enum CodingKeys: String, CodingKey {
-        case daily
-        case weekly
-        case monthly
-    }
-
-    nonisolated init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.daily = try container.decode(Double.self, forKey: .daily)
-        self.weekly = try container.decode(Double.self, forKey: .weekly)
-        self.monthly = try container.decode(Double.self, forKey: .monthly)
-    }
+    let daily, weekly, monthly, threeMonthly, sixMonthly, annual: Double?
 }
 
-// Momentum indikatörleri
+// MARK: - MomentumIndicators
 struct MomentumIndicators: Decodable, Sendable {
-    let rsi: RSIIndicator?
-
-    private enum CodingKeys: String, CodingKey {
-        case rsi
-    }
-
-    nonisolated init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.rsi = try container.decodeIfPresent(RSIIndicator.self, forKey: .rsi)
-    }
+    let rsi, macd, stochastic, stochasticAvg: IndicatorItem?
 }
 
-// RSI indikatörü
-struct RSIIndicator: Decodable, Sendable {
-    let value: Double
-
-    private enum CodingKeys: String, CodingKey {
-        case value
-    }
-
-    nonisolated init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.value = try container.decode(Double.self, forKey: .value)
-    }
+// MARK: - IndicatorItem
+struct IndicatorItem: Decodable, Sendable {
+    let name: String?
+    let value: Double?
 }
 
-// Risk parametreleri
+// MARK: - RiskParam
 struct RiskParam: Decodable, Sendable {
     let name: String
+    let value: String
+}
+
+// MARK: - RatioDetail
+struct RatioDetail: Decodable, Sendable {
+    let name: String
     let value: Double
+    let isPercentage: Bool?
+}
 
-    private enum CodingKeys: String, CodingKey {
-        case name
-        case value
-    }
+// MARK: - BalanceItem
+struct BalanceItem: Decodable, Sendable {
+    let name: String
+    let value: Double
+}
 
-    nonisolated init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.name = try container.decode(String.self, forKey: .name)
-        self.value = try container.decode(Double.self, forKey: .value)
-    }
+// MARK: - MovingAverageItem
+struct MovingAverageItem: Decodable, Sendable {
+    let smaValue: Double
+    let percentageDifference: Double
 }

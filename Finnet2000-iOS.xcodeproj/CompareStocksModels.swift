@@ -1,16 +1,25 @@
-// CompareStocksModels.swift
 import Foundation
 
-typealias CompareStocksResponse = [String: CompareStockDetail]
+// MARK: - Ana model
+struct CompareStocksResponse: Codable {
+    let stocks: [String: StockDetail]
+    
+    // Custom CodingKeys, çünkü kök seviyede A1CAP, AKBNK gibi dinamik key’ler var
+    init(from decoder: Decoder) throws {
+        let container = try decoder.singleValueContainer()
+        self.stocks = try container.decode([String: StockDetail].self)
+    }
+}
 
-struct CompareStockDetail: Decodable, Sendable {
-    let name: String?
-    let logo: String?
-    let datePriceList: TimeSeriesList<Double>?
-    let dateReturnList: TimeSeriesList<Double>?
+// MARK: - StockDetail (her bir hisse verisi)
+struct StockDetail: Codable {
+    let name: String
+    let logo: String
+    let datePriceList: DateValueList?
+    let dateReturnList: DateValueList?
     let riskParams: [RiskParam]?
     let periodicalReturns: PeriodicalReturns?
-    let ratios: [String: Double]? // unknown, keep flexible
+    let ratios: [String: Double]?
     let balanceSheet: [String: Double]?
     let incomeStatement: [String: Double]?
     let cashFlowStatement: [String: Double]?
@@ -19,17 +28,20 @@ struct CompareStockDetail: Decodable, Sendable {
     let momentumIndicators: MomentumIndicators?
 }
 
-struct TimeSeriesList<T: Decodable & Sendable>: Decodable, Sendable {
+// MARK: - Tarih-Değer listeleri
+struct DateValueList: Codable {
     let dates: [String]
-    let values: [T]
+    let values: [Double]
 }
 
-struct RiskParam: Decodable, Sendable {
+// MARK: - Risk Parametreleri
+struct RiskParam: Codable {
     let name: String
     let value: String
 }
 
-struct PeriodicalReturns: Decodable, Sendable {
+// MARK: - Dönemsel Getiriler
+struct PeriodicalReturns: Codable {
     let daily: Double
     let weekly: Double
     let monthly: Double
@@ -38,26 +50,28 @@ struct PeriodicalReturns: Decodable, Sendable {
     let annual: Double
 }
 
-struct MovingAverages: Decodable, Sendable {
-    let sma20: SMA?
-    let sma50: SMA?
-    let sma100: SMA?
-    let sma200: SMA?
-    struct SMA: Decodable, Sendable {
-        let smaValue: Double
-        let percentageDifference: Double
-    }
+// MARK: - Hareketli Ortalamalar
+struct MovingAverages: Codable {
+    let sma20: SMAValue
+    let sma50: SMAValue
+    let sma100: SMAValue
+    let sma200: SMAValue
 }
 
-struct MomentumIndicators: Decodable, Sendable {
-    let rsi: IndicatorValue?
-    let macd: IndicatorValue?
-    let stochastic: IndicatorValue?
-    let stochasticAvg: IndicatorValue?
-
-    struct IndicatorValue: Decodable, Sendable {
-        let name: String?
-        let value: Double
-    }
+struct SMAValue: Codable {
+    let smaValue: Double
+    let percentageDifference: Double
 }
 
+// MARK: - Momentum Göstergeleri
+struct MomentumIndicators: Codable {
+    let rsi: Indicator
+    let macd: Indicator
+    let stochastic: Indicator
+    let stochasticAvg: Indicator
+}
+
+struct Indicator: Codable {
+    let name: String
+    let value: Double
+}

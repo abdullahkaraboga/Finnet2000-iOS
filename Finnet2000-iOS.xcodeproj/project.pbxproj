@@ -6,13 +6,44 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		C316E6C02EAB9C03007A9E45 /* Alamofire in Frameworks */ = {isa = PBXBuildFile; productRef = C316E6BF2EAB9C03007A9E45 /* Alamofire */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		C383E77E2EAB9A0A00ABF231 /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
 		C383E68C2EAB916A00ABF231 /* Finnet2000-iOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Finnet2000-iOS.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		C383E7722EAB973D00ABF231 /* Exceptions for "Finnet2000-iOS" folder in "Finnet2000-iOS" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Resources/Configs/Environment.plist,
+				Resources/Configs/Info.plist,
+			);
+			target = C383E68B2EAB916A00ABF231 /* Finnet2000-iOS */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		C383E68E2EAB916A00ABF231 /* Finnet2000-iOS */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				C383E7722EAB973D00ABF231 /* Exceptions for "Finnet2000-iOS" folder in "Finnet2000-iOS" target */,
+			);
 			path = "Finnet2000-iOS";
 			sourceTree = "<group>";
 		};
@@ -23,6 +54,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C316E6C02EAB9C03007A9E45 /* Alamofire in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -55,6 +87,7 @@
 				C383E6882EAB916A00ABF231 /* Sources */,
 				C383E6892EAB916A00ABF231 /* Frameworks */,
 				C383E68A2EAB916A00ABF231 /* Resources */,
+				C383E77E2EAB9A0A00ABF231 /* Embed Frameworks */,
 			);
 			buildRules = (
 			);
@@ -65,6 +98,7 @@
 			);
 			name = "Finnet2000-iOS";
 			packageProductDependencies = (
+				C316E6BF2EAB9C03007A9E45 /* Alamofire */,
 			);
 			productName = "Finnet2000-iOS";
 			productReference = C383E68C2EAB916A00ABF231 /* Finnet2000-iOS.app */;
@@ -94,6 +128,9 @@
 			);
 			mainGroup = C383E6832EAB916A00ABF231;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				C316E6BE2EAB9C03007A9E45 /* XCRemoteSwiftPackageReference "Alamofire" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = C383E68D2EAB916A00ABF231 /* Products */;
 			projectDirPath = "";
@@ -332,6 +369,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		C316E6BE2EAB9C03007A9E45 /* XCRemoteSwiftPackageReference "Alamofire" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/Alamofire/Alamofire";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 5.10.2;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		C316E6BF2EAB9C03007A9E45 /* Alamofire */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C316E6BE2EAB9C03007A9E45 /* XCRemoteSwiftPackageReference "Alamofire" */;
+			productName = Alamofire;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = C383E6842EAB916A00ABF231 /* Project object */;
 }
