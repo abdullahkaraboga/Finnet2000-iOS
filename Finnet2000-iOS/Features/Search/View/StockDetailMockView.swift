@@ -1,31 +1,13 @@
-import Combine
 import SwiftUI
-
-@MainActor
-final class StockDetailMockViewModel: ObservableObject {
-    @Published var data: StockDetailData?
-
-    func fetch(stockCode: String) {
-        // Do nothing here; the view already renders with SDData fallbacks.
-        // If you want to see real mock data, you can assign to `data` similarly to the other mock file.
-    }
-}
 
 // MARK: - StockDetailMockView
 
 struct StockDetailMockView: View {
-    let stockCode: String
-
     @Environment(\.dismiss) private var dismiss
-    @StateObject private var viewModel = StockDetailMockViewModel()
     @State private var selectedTab = "Özet"
     @State private var selectedSubTab = ""
     @State private var showOpenPosition = false
     @State private var showAlarm = false
-
-    init(stockCode: String = "") {
-        self.stockCode = stockCode
-    }
 
     private let tabs = ["Özet", "Finansallar", "Oranlar", "Sektörel Analiz"]
     private let subTabs: [String: [String]] = [
@@ -89,97 +71,9 @@ struct StockDetailMockView: View {
                 .presentationDragIndicator(.visible)
                 .presentationCornerRadius(28)
         }
-        .onChange(of: selectedTab) { newTab in
+        .onChange(of: selectedTab) { _, newTab in
             selectedSubTab = subTabs[newTab]?.first ?? ""
         }
-        .task { viewModel.fetch(stockCode: stockCode) }
-    }
-
-    // MARK: - Computed Properties (Real Data)
-
-    private var sdReturnsRows: [[String]] {
-        guard let r = viewModel.data?.returns else { return SDData.returnsRows }
-        let code = viewModel.data?.stockTag.code ?? stockCode.uppercased()
-        return [
-            [code,    sdPctStr(r.daily.stock),     sdPctStr(r.weekly.stock),     sdPctStr(r.monthly.stock),     sdPctStr(r.annual.stock)],
-            ["XU100", sdPctStr(r.daily.benchmark), sdPctStr(r.weekly.benchmark), sdPctStr(r.monthly.benchmark), sdPctStr(r.annual.benchmark)]
-        ]
-    }
-
-    private var sdMovingAvgRows: [[String]] {
-        guard let ma = viewModel.data?.movingAverages else { return SDData.movingAvgRows }
-        return [
-            ["Fark",  sdPctStr(ma.sma20.percentageDifference), sdPctStr(ma.sma50.percentageDifference), sdPctStr(ma.sma100.percentageDifference), sdPctStr(ma.sma200.percentageDifference)],
-            ["Değer", sdNumStr(ma.sma20.smaValue),              sdNumStr(ma.sma50.smaValue),              sdNumStr(ma.sma100.smaValue),              sdNumStr(ma.sma200.smaValue)]
-        ]
-    }
-
-    private var sdMomentumRows: [[String]] {
-        guard let mi = viewModel.data?.momentumIndicators else { return SDData.momentumRows }
-        return [
-            ["Durum", sdSignal(mi.rsi.name), sdSignal(mi.stochastic.name), sdSignal(mi.macd.name), sdSignal(mi.stochasticAvg.name)],
-            ["Değer", sdNumStr(mi.rsi.value), sdNumStr(mi.stochastic.value), sdNumStr(mi.macd.value), sdNumStr(mi.stochasticAvg.value)]
-        ]
-    }
-
-    private var sdFundPairs: [(String, String)] {
-        guard let f = viewModel.data?.topHoldingFunds, !f.isEmpty else { return SDData.funds }
-        return f.sorted { $0.value > $1.value }.map { (k, v) in (k, sdNumStr(v)) }
-    }
-
-    private var sdMultiplesRows: [(String, String)] {
-        guard let m = viewModel.data?.summaryMultipliers, !m.isEmpty else { return SDData.multiplesRows }
-        return m.sorted { Int($0.key) ?? 0 < Int($1.key) ?? 0 }.map { (_, item) in (item.name, sdNumStr(item.value)) }
-    }
-
-    private var sdBalanceRows: [(String, String)] {
-        guard let b = viewModel.data?.summaryBalanceSheet, !b.isEmpty else { return SDData.balanceRows }
-        return b.sorted { Int($0.key) ?? 0 < Int($1.key) ?? 0 }.map { (_, item) in (item.name, sdLargeNumStr(item.value)) }
-    }
-
-    private var sdIncomeRows: [(String, String)] {
-        guard let i = viewModel.data?.summaryIncomeStatement, !i.isEmpty else { return [] }
-        return i.sorted { Int($0.key) ?? 0 < Int($1.key) ?? 0 }.map { (_, item) in (item.name, sdLargeNumStr(item.value)) }
-    }
-
-    private var sdPartnershipRows: [(String, String)] {
-        guard let p = viewModel.data?.partnerships, !p.isEmpty else { return [] }
-        return p.sorted { $0.rate > $1.rate }.map { prt in (prt.name, "%" + sdNumStr(prt.rate)) }
-    }
-
-    private var sdRiskRows: [(String, String)] {
-        guard let r = viewModel.data?.riskAnalysis, !r.isEmpty else { return [] }
-        return r.map { ($0.name, $0.value) }
-    }
-
-    private var sdSektoralPDRows: [(String, String)] {
-        guard let s = viewModel.data?.summarySectoralAnalysis, !s.isEmpty else { return [] }
-        return s.sorted { $0.key < $1.key }.map { (code, item) in (code, sdLargeNumStr(item.value)) }
-    }
-
-    // MARK: - Formatters
-
-    private func sdPctStr(_ value: Double) -> String {
-        let s = sdNumStr(abs(value))
-        return value < 0 ? "%-\(s)" : "%\(s)"
-    }
-
-    private func sdNumStr(_ value: Double, decimals: Int = 2) -> String {
-        String(format: "%.\(decimals)f", value).replacingOccurrences(of: ".", with: ",")
-    }
-
-    private func sdLargeNumStr(_ value: Double) -> String {
-        let av = abs(value)
-        if av >= 1_000_000_000 {
-            return sdNumStr(value / 1_000_000_000) + " Mlr ₺"
-        } else if av >= 1_000_000 {
-            return sdNumStr(value / 1_000_000) + " Mln ₺"
-        }
-        return sdNumStr(value)
-    }
-
-    private func sdSignal(_ name: String) -> String {
-        name.isEmpty ? "-" : name
     }
 
     // MARK: - Header
@@ -213,33 +107,35 @@ struct StockDetailMockView: View {
             .padding(.top, 10)
 
             HStack(spacing: 12) {
-                Group {
-                    if let logo = viewModel.data?.stockTag.logoPath,
-                       let url = URL(string: logo) {
-                        AsyncImage(url: url) { phase in
-                            if let img = phase.image {
-                                img.resizable().scaledToFit()
-                            } else {
-                                sdFallbackLogo(stockCode)
-                            }
-                        }
-                    } else {
-                        sdFallbackLogo(stockCode)
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(Color.sdBlue)
+                    .frame(width: 44, height: 44)
+                    .overlay {
+                        Text("F")
+                            .font(.system(size: 24, weight: .bold))
+                            .foregroundStyle(.white)
                     }
-                }
-                .frame(width: 44, height: 44)
-                .clipShape(RoundedRectangle(cornerRadius: 8))
                 VStack(alignment: .leading, spacing: 3) {
-                    Text(viewModel.data?.stockTag.code ?? stockCode.uppercased())
+                    Text(SDData.symbol)
                         .font(.system(size: 17, weight: .bold))
                         .foregroundStyle(.white)
-                    Text(viewModel.data?.stockTag.name ?? "")
+                    Text(SDData.company)
                         .font(.system(size: 11))
                         .foregroundStyle(Color.white.opacity(0.5))
                         .lineLimit(1)
                 }
                 Spacer()
-                sdHeaderRight
+                VStack(alignment: .trailing, spacing: 3) {
+                    Text(SDData.price)
+                        .font(.system(size: 16, weight: .bold))
+                        .foregroundStyle(.white)
+                    Text(SDData.change)
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(Color.sdGreen)
+                    Text(SDData.date)
+                        .font(.system(size: 10))
+                        .foregroundStyle(Color.white.opacity(0.4))
+                }
             }
             .padding(.horizontal, 16)
             .padding(.top, 4)
@@ -256,36 +152,7 @@ struct StockDetailMockView: View {
                         in: RoundedRectangle(cornerRadius: 12, style: .continuous))
     }
 
-    private var sdHeaderRight: some View {
-        let tag = viewModel.data?.stockTag
-        let price = tag.map { sdNumStr($0.price) + " ₺" } ?? "—"
-        let ret   = tag?.dailyReturn ?? 0
-        let change = tag != nil ? sdPctStr(ret) : "—"
-        let date   = tag.map { $0.date.f2000Formatted } ?? "—"
-        return VStack(alignment: .trailing, spacing: 3) {
-            Text(price)
-                .font(.system(size: 16, weight: .bold))
-                .foregroundStyle(.white)
-            Text(change)
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(ret >= 0 ? Color.sdGreen : Color.sdRed)
-            Text(date)
-                .font(.system(size: 10))
-                .foregroundStyle(Color.white.opacity(0.4))
-        }
-    }
-
-    private func sdFallbackLogo(_ code: String) -> some View {
-        RoundedRectangle(cornerRadius: 8)
-            .fill(Color.sdBlue)
-            .overlay {
-                Text(String(code.prefix(1)).uppercased())
-                    .font(.system(size: 24, weight: .bold))
-                    .foregroundStyle(.white)
-            }
-    }
-
-// MARK: - Tab Bar
+    // MARK: - Tab Bar
 
     private var stockTabBar: some View {
         HStack(spacing: 0) {
@@ -365,20 +232,14 @@ struct StockDetailMockView: View {
     private var ozetContent: some View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: 22) {
-                sectionCard("BEŞGEN GRAFİK") {
-                    ZStack {
-                        SDRadarChart(entries: SDData.radarEntries)
-                            .frame(height: 240)
-                            .padding(.vertical, 14)
-                            .padding(.horizontal, 10)
-                            .opacity(0.25)
-                        Text("YAKINDA")
-                            .font(.system(size: 20, weight: .bold))
-                            .foregroundStyle(Color.sdDark.opacity(0.5))
-                    }
+                sectionCard("Beşgen Grafik") {
+                    SDRadarChart(entries: SDData.radarEntries)
+                        .frame(height: 240)
+                        .padding(.vertical, 14)
+                        .padding(.horizontal, 10)
                 }
                 sectionCard("Fiyat Grafiği") {
-                    SDLineChart(points: viewModel.data?.datePriceList.values ?? SDData.pricePoints)
+                    SDLineChart(points: SDData.pricePoints)
                         .frame(height: 160)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 14)
@@ -386,44 +247,29 @@ struct StockDetailMockView: View {
                 sectionCard("Getiriler") {
                     sdMetricsTable(
                         headers: ["", "Günlük", "Haftalık", "Aylık", "Yıllık"],
-                        rows: sdReturnsRows
+                        rows: SDData.returnsRows
                     )
                 }
                 sectionCard("Hareketli Ortalamalar") {
                     sdMetricsTable(
                         headers: ["", "20MA", "50MA", "100MA", "200MA"],
-                        rows: sdMovingAvgRows
+                        rows: SDData.movingAvgRows
                     )
                 }
                 sectionCard("Momentum İndikatörleri") {
                     sdMetricsTable(
                         headers: ["", "RSI", "STOK", "MACD", "STOKORT"],
-                        rows: sdMomentumRows
+                        rows: SDData.momentumRows
                     )
                 }
                 sectionCard("Hangi Fonlarda Var?") {
-                    sdFundListView(sdFundPairs)
+                    sdFundList()
                 }
                 sectionCard("Piyasa Çarpanları") {
-                    sdPairList(sdMultiplesRows, headers: ("Oran", "Değer"))
+                    sdPairList(SDData.multiplesRows, headers: ("Oran", "Değer"))
                 }
                 sectionCard("Özet Bilanço") {
-                    sdPairList(sdBalanceRows, headers: ("Kalem", "Değer"))
-                }
-                if !sdIncomeRows.isEmpty {
-                    sectionCard("Özet Gelir Tablosu") {
-                        sdPairList(sdIncomeRows, headers: ("Kalem", "Değer"))
-                    }
-                }
-                if !sdPartnershipRows.isEmpty {
-                    sectionCard("Ortaklık Yapısı") {
-                        sdPairList(sdPartnershipRows, headers: ("Ortak", "Pay"))
-                    }
-                }
-                if !sdRiskRows.isEmpty {
-                    sectionCard("Risk Analizi") {
-                        sdPairList(sdRiskRows, headers: ("Gösterge", "Değer"))
-                    }
+                    sdPairList(SDData.balanceRows, headers: ("Kalem", "Değer"))
                 }
             }
             .padding(.horizontal, 12)
@@ -449,8 +295,8 @@ struct StockDetailMockView: View {
     private var bilancoView: some View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: 22) {
-                sectionCard("BİLANÇO") {
-                    sdFinancialTable(periods: SDData.financialPeriods.map { $0.uppercased() }, rows: SDData.bilancoRows.map { ($0.0.uppercased(), $0.1) })
+                sectionCard("Bilanço") {
+                    sdFinancialTable(periods: SDData.financialPeriods, rows: SDData.bilancoRows)
                 }
             }
             .padding(.horizontal, 12)
@@ -463,8 +309,8 @@ struct StockDetailMockView: View {
     private var gelirTablosuView: some View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: 22) {
-                sectionCard("GELİR TABLOSU") {
-                    sdFinancialTable(periods: SDData.financialPeriods.map { $0.uppercased() }, rows: SDData.gelirTablosuRows.map { ($0.0.uppercased(), $0.1) })
+                sectionCard("Gelir Tablosu") {
+                    sdFinancialTable(periods: SDData.financialPeriods, rows: SDData.gelirTablosuRows)
                 }
             }
             .padding(.horizontal, 12)
@@ -477,8 +323,8 @@ struct StockDetailMockView: View {
     private var nakitAkimView: some View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: 22) {
-                sectionCard("NAKİT AKIM") {
-                    sdFinancialTable(periods: SDData.annualPeriods.map { $0.uppercased() }, rows: SDData.nakitAkimRows.map { ($0.0.uppercased(), $0.1) })
+                sectionCard("Nakit Akım") {
+                    sdFinancialTable(periods: SDData.annualPeriods, rows: SDData.nakitAkimRows)
                 }
             }
             .padding(.horizontal, 12)
@@ -512,8 +358,8 @@ struct StockDetailMockView: View {
     private var finansalYapiView: some View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: 22) {
-                sectionCard("FİNANSAL YAPI ORANLARI") {
-                    sdPairList(SDData.finansalYapiRows.map { ($0.0.uppercased(), $0.1) }, headers: ("ORAN", "DEĞER"))
+                sectionCard("Finansal Yapı Oranları") {
+                    sdPairList(SDData.finansalYapiRows, headers: ("Oran", "Değer"))
                 }
             }
             .padding(.horizontal, 12)
@@ -526,8 +372,8 @@ struct StockDetailMockView: View {
     private var faaliyetEtkinligiView: some View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: 22) {
-                sectionCard("FAALİYET ETKİNLİĞİ ORANLARI") {
-                    sdPairList(SDData.faaliyetEtkinligiRows.map { ($0.0.uppercased(), $0.1) }, headers: ("ORAN", "DEĞER"))
+                sectionCard("Faaliyet Etkinliği Oranları") {
+                    sdPairList(SDData.faaliyetEtkinligiRows, headers: ("Oran", "Değer"))
                 }
             }
             .padding(.horizontal, 12)
@@ -540,8 +386,8 @@ struct StockDetailMockView: View {
     private var likiditeView: some View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: 22) {
-                sectionCard("LİKİDİTE ORANLARI") {
-                    sdPairList(SDData.likiditeRows.map { ($0.0.uppercased(), $0.1) }, headers: ("ORAN", "DEĞER"))
+                sectionCard("Likidite Oranları") {
+                    sdPairList(SDData.likiditeRows, headers: ("Oran", "Değer"))
                 }
             }
             .padding(.horizontal, 12)
@@ -554,8 +400,8 @@ struct StockDetailMockView: View {
     private var karlilikView: some View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: 22) {
-                sectionCard("KARLILIK ORANLARI") {
-                    sdPairList(SDData.karlilikRows.map { ($0.0.uppercased(), $0.1) }, headers: ("ORAN", "DEĞER"))
+                sectionCard("Karlılık Oranları") {
+                    sdPairList(SDData.karlilikRows, headers: ("Oran", "Değer"))
                 }
             }
             .padding(.horizontal, 12)
@@ -568,8 +414,8 @@ struct StockDetailMockView: View {
     private var maliyetView: some View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: 22) {
-                sectionCard("MALİYET ORANLARI") {
-                    sdPairList(SDData.maliyetRows.map { ($0.0.uppercased(), $0.1) }, headers: ("KALEM", "ORAN"))
+                sectionCard("Maliyet Oranları") {
+                    sdPairList(SDData.maliyetRows, headers: ("Kalem", "Oran"))
                 }
             }
             .padding(.horizontal, 12)
@@ -582,8 +428,8 @@ struct StockDetailMockView: View {
     private var piyasaCarpanlariView: some View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: 22) {
-                sectionCard("PİYASA ÇARPANLARI") {
-                    sdPairList(SDData.piyasaCarpanlariRows.map { ($0.0.uppercased(), $0.1) }, headers: ("ORAN", "DEĞER"))
+                sectionCard("Piyasa Çarpanları") {
+                    sdPairList(SDData.piyasaCarpanlariRows, headers: ("Oran", "Değer"))
                 }
             }
             .padding(.horizontal, 12)
@@ -596,10 +442,10 @@ struct StockDetailMockView: View {
     private var buyumeView: some View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: 22) {
-                sectionCard("BÜYÜME ORANLARI") {
+                sectionCard("Büyüme Oranları") {
                     sdMetricsTable(
-                        headers: ["KALEM", "2022/12", "2023/12", "2024/12"],
-                        rows: SDData.buyumeRows.map { $0.map { $0.uppercased() } }
+                        headers: ["", "2022/12", "2023/12", "2024/12"],
+                        rows: SDData.buyumeRows
                     )
                 }
             }
@@ -626,17 +472,11 @@ struct StockDetailMockView: View {
     private var sektorFinansallarView: some View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: 22) {
-                if !sdSektoralPDRows.isEmpty {
-                    sectionCard("Piyasa Değeri Karşılaştırması") {
-                        sdPairList(sdSektoralPDRows, headers: ("Hisse", "Piyasa Değeri"))
-                    }
-                } else {
-                    sectionCard("SEKTÖREL FİNANSAL KARŞILAŞTIRMA") {
-                        sdMetricsTable(
-                            headers: ["KALEM", "HİSSE", "SEKTÖR", "XU100"],
-                            rows: SDData.sektorFinansallarRows.map { $0.map { $0.uppercased() } }
-                        )
-                    }
+                sectionCard("Sektörel Finansal Karşılaştırma") {
+                    sdMetricsTable(
+                        headers: ["Kalem", "KTLEV", "Sektör", "XU100"],
+                        rows: SDData.sektorFinansallarRows
+                    )
                 }
             }
             .padding(.horizontal, 12)
@@ -649,10 +489,10 @@ struct StockDetailMockView: View {
     private var sektorOranlarView: some View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: 22) {
-                sectionCard("SEKTÖREL ORAN KARŞILAŞTIRMASI") {
+                sectionCard("Sektörel Oran Karşılaştırması") {
                     sdMetricsTable(
-                        headers: ["ORAN", "HİSSE", "SEKTÖR", "XU100"],
-                        rows: SDData.sektorOranlarRows.map { $0.map { $0.uppercased() } }
+                        headers: ["Oran", "KTLEV", "Sektör", "XU100"],
+                        rows: SDData.sektorOranlarRows
                     )
                 }
             }
@@ -666,10 +506,10 @@ struct StockDetailMockView: View {
     private var sektorGetiriView: some View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: 22) {
-                sectionCard("GETİRİ KARŞILAŞTIRMASI") {
+                sectionCard("Getiri Karşılaştırması") {
                     sdMetricsTable(
-                        headers: ["KALEM", "GÜNLÜK", "AYLIK", "3 AYLIK", "YILLIK"],
-                        rows: SDData.sektorGetiriRows.map { $0.map { $0.uppercased() } }
+                        headers: ["", "Günlük", "Aylık", "3 Aylık", "Yıllık"],
+                        rows: SDData.sektorGetiriRows
                     )
                 }
             }
@@ -799,7 +639,7 @@ struct StockDetailMockView: View {
     }
 
     @ViewBuilder
-    private func sdFundListView(_ pairs: [(String, String)]) -> some View {
+    private func sdFundList() -> some View {
         VStack(spacing: 0) {
             HStack {
                 Text("Fon")
@@ -818,26 +658,21 @@ struct StockDetailMockView: View {
             .padding(.horizontal, 12)
             .padding(.vertical, 9)
             Divider().padding(.horizontal, 12)
-            ForEach(pairs.indices, id: \.self) { i in
+            ForEach(SDData.funds.indices, id: \.self) { i in
                 HStack {
-                    Text(pairs[i].0)
+                    Text(SDData.funds[i].0)
                         .font(.system(size: 13))
                         .foregroundStyle(Color.sdDark)
                     Spacer()
-                    Text(pairs[i].1)
+                    Text(SDData.funds[i].1)
                         .font(.system(size: 13))
                         .foregroundStyle(Color.sdDark)
                 }
                 .padding(.horizontal, 12)
                 .padding(.vertical, 10)
-                if i < pairs.count - 1 { Divider().padding(.horizontal, 12) }
+                if i < SDData.funds.count - 1 { Divider().padding(.horizontal, 12) }
             }
         }
-    }
-
-    @ViewBuilder
-    private func sdFundList() -> some View {
-        sdFundListView(SDData.funds)
     }
 
     @ViewBuilder
@@ -873,7 +708,6 @@ struct StockDetailMockView: View {
     }
 }
 
-  
 // MARK: - Color Palette
 
 private extension Color {
@@ -1235,8 +1069,5 @@ private struct SDLineChart: View {
 }
 
 #Preview {
-    NavigationStack {
-        StockDetailMockView(stockCode: "GARAN")
-    }
+    StockDetailMockView()
 }
-
