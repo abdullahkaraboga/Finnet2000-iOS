@@ -8,6 +8,12 @@ final class ArticlesListViewModel: ObservableObject {
     @Published var isLoading = false
     @Published var errorMessage: String?
 
+    private let repository: ContentRepositoryProtocol
+
+    init(repository: ContentRepositoryProtocol = NewsRepository()) {
+        self.repository = repository
+    }
+
     func load() {
         guard !isLoading else { return }
         isLoading = true
@@ -15,7 +21,7 @@ final class ArticlesListViewModel: ObservableObject {
 
         Task {
             do {
-                let result = try await ContentsAPIService.shared.fetchArticles()
+                let result = try await repository.fetchArticles()
                 self.items = result.sorted { ($0.publishedAt ?? .distantPast) > ($1.publishedAt ?? .distantPast) }
             } catch {
                 self.errorMessage = error.localizedDescription

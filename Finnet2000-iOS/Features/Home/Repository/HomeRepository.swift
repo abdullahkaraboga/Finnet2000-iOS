@@ -1,7 +1,11 @@
 import Foundation
 import Alamofire
 
-final class HomeRepository {
+protocol HomeRepositoryProtocol {
+    func fetchHomePage(currency: String) async throws -> HomePageResponse
+}
+
+final class HomeRepository: HomeRepositoryProtocol {
 
     private let baseURL = "https://api.finnet2000.com/api/HomePage/HomePage"
 
@@ -10,7 +14,7 @@ final class HomeRepository {
     func fetchHomePage(currency: String = "TRY") async throws -> HomePageResponse {
         let parameters: Parameters = ["currency": currency]
 
-        return try await NetworkManager.shared.authedSession
+        let data = try await NetworkManager.shared.authedSession
             .request(
                 baseURL,
                 method: .get,
@@ -18,8 +22,11 @@ final class HomeRepository {
                 encoding: URLEncoding.queryString
             )
             .validate(statusCode: 200..<300)
-            .serializingDecodable(HomePageResponse.self)
+            .serializingData()
             .value
+
+        let decoder = JSONDecoder()
+        return try decoder.decode(HomePageResponse.self, from: data)
     }
 
     // MARK: - Completion-based API

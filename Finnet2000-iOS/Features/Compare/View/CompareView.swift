@@ -1,4 +1,5 @@
 import SwiftUI
+import Charts
 
 struct CompareView: View {
     @StateObject private var viewModel = CompareViewModel()
@@ -6,38 +7,67 @@ struct CompareView: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
-                NavigationHeaderView()
                 ScrollView {
-                    VStack(spacing: 24) {
-                        // 🔹 Dropdown alanı
+                    VStack(spacing: 0) {
+                        // 🔹 Picker
                         pickerSection
-                        
+                            .padding(.horizontal, 16)
+                            .padding(.top, 16)
+                            .padding(.bottom, 20)
+
                         if let result = viewModel.compareResult {
                             RadarChartSection(result: result)
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 20)
+                        }
+
+                        // 🔹 Hisse Fiyatları Çift Çizgi Grafik
+                        if let result = viewModel.compareResult {
+                            PriceChartSection(result: result,
+                                             leftKey: viewModel.selectedCode1,
+                                             rightKey: viewModel.selectedCode2)
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 20)
                         }
 
                         // 🔹 Risk Parametreleri
                         if let result = viewModel.compareResult {
                             RiskParametersSection(result: result, leftKey: viewModel.selectedCode1, rightKey: viewModel.selectedCode2)
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 20)
                         }
 
                         // 🔹 Getiriler
                         if let result = viewModel.compareResult {
                             ReturnsSection(result: result, leftKey: viewModel.selectedCode1, rightKey: viewModel.selectedCode2)
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 20)
+                        }
+
+                        // 🔹 Hangi Fonlarda Var?
+                        if let result = viewModel.compareResult {
+                            FundsBarChartSection(result: result,
+                                                 leftKey: viewModel.selectedCode1,
+                                                 rightKey: viewModel.selectedCode2)
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 20)
                         }
 
                         // 🔹 Finansal Tablolar
                         if let result = viewModel.compareResult {
                             FinancialTablesSection(result: result, leftKey: viewModel.selectedCode1, rightKey: viewModel.selectedCode2)
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 20)
                         }
 
                         // 🔹 Finansal Analiz
                         if let result = viewModel.compareResult {
                             FinancialAnalysisSection(result: result, leftKey: viewModel.selectedCode1, rightKey: viewModel.selectedCode2)
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 20)
                         }
                     }
-                    .padding(.horizontal)
-                    .padding(.vertical, 8)
+                    .padding(.bottom, 24)
                 }
                 .background(Color(.systemBackground))
                 .overlay(loadingOverlay)
@@ -52,12 +82,8 @@ struct CompareView: View {
                 .onAppear {
                     if viewModel.stocks.isEmpty { viewModel.loadStocks() }
                 }
-                .onChange(of: viewModel.selectedCode1) { _ in
-                    viewModel.fetchCompareIfReady()
-                }
-                .onChange(of: viewModel.selectedCode2) { _ in
-                    viewModel.fetchCompareIfReady()
-                }
+                .onChange(of: viewModel.selectedCode1) { _ in viewModel.fetchCompareIfReady() }
+                .onChange(of: viewModel.selectedCode2) { _ in viewModel.fetchCompareIfReady() }
             }
         }
         .toolbar(.hidden, for: .navigationBar)
@@ -67,34 +93,83 @@ struct CompareView: View {
 // MARK: - Bölümler
 
 extension CompareView {
-    // Picker alanı
+
+    // MARK: Picker
     private var pickerSection: some View {
         HStack(spacing: 12) {
-            stockPicker(title: "1. Hisse", selection: $viewModel.selectedCode1)
-            stockPicker(title: "2. Hisse", selection: $viewModel.selectedCode2)
+            stockMenuCard(slot: 1,
+                          selectedCode: $viewModel.selectedCode1,
+                          result: viewModel.compareResult)
+            stockMenuCard(slot: 2,
+                          selectedCode: $viewModel.selectedCode2,
+                          result: viewModel.compareResult)
         }
     }
 
-    private func stockPicker(title: String, selection: Binding<String?>) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text(title)
-                .font(.caption)
-                .foregroundColor(.secondary)
-            Picker(title, selection: selection) {
+    private func stockMenuCard(slot: Int,
+                               selectedCode: Binding<String?>,
+                               result: CompareStocksResponse?) -> some View {
+        let detail = selectedCode.wrappedValue.flatMap { result?[$0] }
+        let accentColor: Color = slot == 1 ? Color(red: 0.22, green: 0.47, blue: 0.80) : Color.midGreen
+
+        return VStack(spacing: 6) {
+            Menu {
                 ForEach(viewModel.stocks) { stock in
-                    Text(stock.code).tag(stock.code as String?)
+                    Button(stock.code) {
+                        selectedCode.wrappedValue = stock.code
+                    }
                 }
+            } label: {
+                HStack(spacing: 10) {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(accentColor.opacity(0.25))
+                            .frame(width: 40, height: 40)
+                        if let logo = detail?.logo, let url = URL(string: logo) {
+                            AsyncImage(url: url) { img in
+                                img.resizable().scaledToFit()
+                            } placeholder: {
+                                Text(selectedCode.wrappedValue?.prefix(1).uppercased() ?? "F")
+                                    .font(.system(size: 18, weight: .bold))
+                                    .foregroundColor(.white)
+                            }
+                            .frame(width: 32, height: 32)
+                            .clipShape(RoundedRectangle(cornerRadius: 6))
+                        } else {
+                            Text(selectedCode.wrappedValue?.prefix(1).uppercased() ?? "F")
+                                .font(.system(size: 18, weight: .bold))
+                                .foregroundColor(.white)
+                        }
+                    }
+
+                    Text(selectedCode.wrappedValue ?? "\(slot). Hisse")
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundColor(.white)
+                        .lineLimit(1)
+
+                    Spacer()
+
+                    Image(systemName: "chevron.down")
+                        .foregroundColor(.white.opacity(0.8))
+                        .font(.system(size: 13, weight: .semibold))
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 10)
+                .background(accentColor)
+                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
             }
-            .pickerStyle(.menu)
-            .frame(maxWidth: .infinity)
-            .padding()
-            .background(Color(.secondarySystemBackground))
-            .cornerRadius(10)
+
+            if let name = detail?.name {
+                Text(name)
+                    .font(.system(size: 12))
+                    .foregroundColor(.secondary)
+                    .lineLimit(1)
+            }
         }
         .frame(maxWidth: .infinity)
     }
 
-    // Loading
+    // MARK: Loading
     private var loadingOverlay: some View {
         Group {
             if viewModel.isLoading {
@@ -109,3 +184,124 @@ extension CompareView {
         }
     }
 }
+
+// MARK: - PriceChartSection
+
+struct PriceChartSection: View {
+    let result: CompareStocksResponse
+    let leftKey: String?
+    let rightKey: String?
+
+    private var leftColor: Color { Color(red: 0.40, green: 0.72, blue: 0.95) }
+    private var rightColor: Color { Color.midGreen }
+
+    var body: some View {
+        let left  = (result.keys.contains(leftKey  ?? "") ? leftKey  : result.keys.first)  ?? ""
+        let right = (result.keys.contains(rightKey ?? "") ? rightKey : result.keys.dropFirst().first) ?? ""
+
+        let leftPrices  = result[left]?.datePriceList
+        let rightPrices = result[right]?.datePriceList
+
+        guard let lp = leftPrices, !lp.dates.isEmpty,
+              let rp = rightPrices, !rp.dates.isEmpty else { return AnyView(EmptyView()) }
+
+        return AnyView(
+            VStack(alignment: .leading, spacing: 12) {
+                HStack {
+                    Text("Hisse Fiyatları")
+                        .font(.system(size: 17, weight: .bold))
+                    Image(systemName: "info.circle")
+                        .font(.system(size: 14))
+                        .foregroundColor(.secondary)
+                }
+
+                if #available(iOS 16.0, *) {
+                    dualLineChart(left: left, right: right, lp: lp, rp: rp)
+                } else {
+                    Text("Grafik iOS 16+ gerektirir.")
+                        .foregroundColor(.secondary)
+                }
+            }
+        )
+    }
+
+    @available(iOS 16.0, *)
+    private func dualLineChart(left: String, right: String,
+                               lp: DateValueList, rp: DateValueList) -> some View {
+        // Precompute safe indices and values to keep the Chart builder simple
+        let leftCount = min(lp.dates.count, lp.values.count)
+        let rightCount = min(rp.dates.count, rp.values.count)
+        let leftIndices: [Int] = Array(0..<leftCount)
+        let rightIndices: [Int] = Array(0..<rightCount)
+
+        return VStack(spacing: 0) {
+            Chart {
+                // Left series
+                ForEach(leftIndices, id: \.self) { i in
+                    let y = lp.values[i]
+                    LineMark(
+                        x: .value("Tarih", i),
+                        y: .value(left, y),
+                        series: .value("Hisse", left)
+                    )
+                    .foregroundStyle(leftColor)
+                    .interpolationMethod(.catmullRom)
+                }
+                // Right series
+                ForEach(rightIndices, id: \.self) { i in
+                    let y = rp.values[i]
+                    LineMark(
+                        x: .value("Tarih", i),
+                        y: .value(right, y),
+                        series: .value("Hisse", right)
+                    )
+                    .foregroundStyle(rightColor)
+                    .interpolationMethod(.catmullRom)
+                }
+            }
+            .chartXAxis {
+                let desiredTickCount = 6
+                let tickStride = max(1, leftCount / desiredTickCount)
+                let ticks: [Int] = stride(from: 0, to: leftCount, by: tickStride).map { $0 }
+                AxisMarks(values: ticks) { v in
+                    if let idx = v.as(Int.self), idx < leftCount {
+                        let label = lp.dates[idx]
+                        AxisValueLabel(String(label.prefix(5)))
+                            .font(.system(size: 9))
+                    }
+                }
+            }
+            .chartYAxis {
+                AxisMarks(position: .leading) { _ in AxisValueLabel().font(.system(size: 10)) }
+            }
+        .frame(height: 260)
+            .padding(.horizontal, 4)
+
+            Divider()
+                .padding(.top, 8)
+
+            // Legend
+            HStack(spacing: 20) {
+                legendItem(color: leftColor,  label: left)
+                legendItem(color: rightColor, label: right)
+            }
+            .padding(.top, 8)
+        }
+    }
+
+    private func legendItem(color: Color, label: String) -> some View {
+        HStack(spacing: 6) {
+            RoundedRectangle(cornerRadius: 2)
+                .fill(color)
+                .frame(width: 18, height: 3)
+            Text(label)
+                .font(.system(size: 12))
+                .foregroundColor(.secondary)
+        }
+    }
+}
+
+#Preview {
+    CompareView()
+}
+

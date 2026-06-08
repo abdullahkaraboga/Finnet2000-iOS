@@ -15,8 +15,6 @@ struct NewsView: View {
                 .padding(.horizontal)
                 .padding(.top)
 
-                Divider()
-
                 Group {
                     switch selectedTab {
                     case 0:
@@ -32,4 +30,8 @@ struct NewsView: View {
         }
         .toolbar(.hidden, for: .navigationBar)
     }
+}
+
+#Preview {
+    NewsView()
 }

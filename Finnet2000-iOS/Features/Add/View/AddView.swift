@@ -1,11 +1,11 @@
-
 import SwiftUI
 
 struct AddView: View {
     private let menuItems: [(title: String, icon: String)] = [
         ("Filtreleme", "line.3.horizontal.decrease.circle"),
         ("Sektörel Analiz", "chart.pie"),
-        ("Teknik Tarayıcı", "magnifyingglass.circle")
+        ("Teknik Tarayıcı", "magnifyingglass.circle"),
+        ("Hisse Detayı", "chart.bar.doc.horizontal")
     ]
 
     var body: some View {

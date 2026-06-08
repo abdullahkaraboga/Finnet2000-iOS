@@ -12,9 +12,9 @@ struct ReturnsSection: View {
     let rightKey: String?
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 12) {
             Text("Getiriler")
-                .font(.headline)
+                .font(.system(size: 17, weight: .bold))
 
             let left = (result.keys.contains(leftKey ?? "") ? leftKey : result.keys.first) ?? ""
             let right = (result.keys.contains(rightKey ?? "") ? rightKey : result.keys.dropFirst().first) ?? ""

@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		C316E6C02EAB9C03007A9E45 /* Alamofire in Frameworks */ = {isa = PBXBuildFile; productRef = C316E6BF2EAB9C03007A9E45 /* Alamofire */; };
+		C327E5DE2FD03CE300899077 /* Starscream in Frameworks */ = {isa = PBXBuildFile; productRef = C327E5DD2FD03CE300899077 /* Starscream */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -55,6 +56,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				C316E6C02EAB9C03007A9E45 /* Alamofire in Frameworks */,
+				C327E5DE2FD03CE300899077 /* Starscream in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -99,6 +101,7 @@
 			name = "Finnet2000-iOS";
 			packageProductDependencies = (
 				C316E6BF2EAB9C03007A9E45 /* Alamofire */,
+				C327E5DD2FD03CE300899077 /* Starscream */,
 			);
 			productName = "Finnet2000-iOS";
 			productReference = C383E68C2EAB916A00ABF231 /* Finnet2000-iOS.app */;
@@ -112,7 +115,7 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 2600;
-				LastUpgradeCheck = 2600;
+				LastUpgradeCheck = 2620;
 				TargetAttributes = {
 					C383E68B2EAB916A00ABF231 = {
 						CreatedOnToolsVersion = 26.0.1;
@@ -130,6 +133,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				C316E6BE2EAB9C03007A9E45 /* XCRemoteSwiftPackageReference "Alamofire" */,
+				C327E5DC2FD03CE300899077 /* XCRemoteSwiftPackageReference "Starscream" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = C383E68D2EAB916A00ABF231 /* Products */;
@@ -221,6 +225,7 @@
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
@@ -278,6 +283,7 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				VALIDATE_PRODUCT = YES;
 			};
@@ -379,6 +385,14 @@
 				minimumVersion = 5.10.2;
 			};
 		};
+		C327E5DC2FD03CE300899077 /* XCRemoteSwiftPackageReference "Starscream" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/daltoniam/Starscream.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 4.0.8;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -386,6 +400,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = C316E6BE2EAB9C03007A9E45 /* XCRemoteSwiftPackageReference "Alamofire" */;
 			productName = Alamofire;
+		};
+		C327E5DD2FD03CE300899077 /* Starscream */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C327E5DC2FD03CE300899077 /* XCRemoteSwiftPackageReference "Starscream" */;
+			productName = Starscream;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

@@ -1,17 +1,17 @@
 // VideosListView.swift
 import SwiftUI
-import AVKit
 import WebKit
-import AVFoundation
 
 struct VideosListView: View {
-    @StateObject private var viewModel = VideosListViewModel()
-    @State private var selectedItem: VideoItem? = nil
-    @State private var showOverlay: Bool = false
+    @StateObject private var viewModel: VideosListViewModel
+    @State private var selectedItem: VideoItem?
+
+    init(viewModel: VideosListViewModel = DependencyContainer.shared.makeVideosListViewModel()) {
+        _viewModel = StateObject(wrappedValue: viewModel)
+    }
 
     var body: some View {
         ZStack {
-            // Ana içerik
             Group {
                 if viewModel.isLoading {
                     ProgressView("Videolar yükleniyor…")
@@ -29,8 +29,9 @@ struct VideosListView: View {
                 } else {
                     List(viewModel.items) { item in
                         Button {
-                            selectedItem = item
-                            withAnimation(.easeInOut(duration: 0.2)) { showOverlay = true }
+                            withAnimation(.easeInOut(duration: 0.2)) {
+                                selectedItem = item
+                            }
                         } label: {
                             VideoRowView(item: item)
                         }
@@ -40,21 +41,27 @@ struct VideosListView: View {
                 }
             }
 
-            
+            if let item = selectedItem {
+                Color.black.opacity(0.45)
+                    .ignoresSafeArea()
+                    .onTapGesture {
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            selectedItem = nil
+                        }
+                    }
+
+                CenteredVideoPopup(item: item) {
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        selectedItem = nil
+                    }
+                }
+                .transition(.scale(scale: 0.95).combined(with: .opacity))
+            }
         }
         .onAppear {
             if viewModel.items.isEmpty {
                 viewModel.load()
             }
-        }
-    }
-
-    private func dismissOverlay() {
-        withAnimation(.easeInOut(duration: 0.2)) {
-            showOverlay = false
-        }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
-            selectedItem = nil
         }
     }
 }
@@ -79,7 +86,7 @@ struct VideoRowView: View {
                     .lineLimit(2)
 
                 if let d = item.publishedAt {
-                    Text(d.formatted(date: .abbreviated, time: .shortened))
+                    Text(d.f2000Formatted)
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -97,59 +104,99 @@ struct VideoRowView: View {
     }
 }
 
-struct PlayerLayerView: UIViewRepresentable {
-    let url: URL
-    // isPortraitHint: true -> fill, false -> fit, nil -> fit
-    var isPortraitHint: Bool?
+struct VideoDetailPlayerView: View {
+    let item: VideoItem
 
-    func makeUIView(context: Context) -> PlayerContainerView {
-        let v = PlayerContainerView()
-        v.backgroundColor = .black
-        v.player = AVPlayer(url: url)
-        v.player?.play()
-        applyGravity(on: v)
-        return v
-    }
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 16) {
+                if let videoID = item.youtubeVideoID {
+                    YouTubeWebView(videoID: videoID)
+                        .frame(height: 220)
+                        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                } else {
+                    ContentUnavailableView(
+                        "Video acilamadi",
+                        systemImage: "play.rectangle",
+                        description: Text("Gecerli bir YouTube video kimligi bulunamadi.")
+                    )
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 220)
+                    .background(Color(.systemGray6), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                }
 
-    func updateUIView(_ uiView: PlayerContainerView, context: Context) {
-        applyGravity(on: uiView)
-    }
+                Text(item.title)
+                    .font(.headline)
 
-    private func applyGravity(on view: PlayerContainerView) {
-        if let isPortrait = isPortraitHint {
-            view.setVideoGravity(isPortrait ? .resizeAspectFill : .resizeAspect)
-        } else {
-            view.setVideoGravity(.resizeAspect)
+                if let desc = item.description, !desc.isEmpty {
+                    Text(desc)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+
+                if let publishedAt = item.publishedAt {
+                    Text(publishedAt.f2000Formatted)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .padding(16)
         }
-    }
-
-    static func dismantleUIView(_ uiView: PlayerContainerView, coordinator: ()) {
-        uiView.player?.pause()
+        .navigationTitle("Video")
+        .navigationBarTitleDisplayMode(.inline)
     }
 }
 
-final class PlayerContainerView: UIView {
-    override class var layerClass: AnyClass { AVPlayerLayer.self }
+struct CenteredVideoPopup: View {
+    let item: VideoItem
+    let onClose: () -> Void
 
-    var player: AVPlayer? {
-        didSet { avLayer.player = player }
-    }
+    var body: some View {
+        GeometryReader { proxy in
+            let popupWidth = min(proxy.size.width - 40, 680)
+            let popupHeight = min(proxy.size.height * 0.72, 560)
 
-    // Yardımcı: ana layer’ı AVPlayerLayer olarak döndür
-    private var avLayer: AVPlayerLayer { layer as! AVPlayerLayer }
+            VStack(spacing: 0) {
+                HStack {
+                    Spacer()
+                    Button(action: onClose) {
+                        Image(systemName: "xmark")
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundStyle(.white)
+                            .frame(width: 28, height: 28)
+                            .background(Color.white.opacity(0.2), in: Circle())
+                    }
+                    .buttonStyle(.plain)
+                    .padding(10)
+                }
 
-    func setVideoGravity(_ gravity: AVLayerVideoGravity) {
-        avLayer.videoGravity = gravity
-    }
-
-    override func layoutSubviews() {
-        super.layoutSubviews()
-        avLayer.frame = bounds
+                Group {
+                    if let videoID = item.youtubeVideoID {
+                        YouTubeWebView(videoID: videoID)
+                    } else {
+                        ContentUnavailableView(
+                            "Video acilamadi",
+                            systemImage: "play.rectangle",
+                            description: Text("Gecerli bir YouTube video kimligi bulunamadi.")
+                        )
+                    }
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
+            .frame(width: popupWidth, height: popupHeight)
+            .background(Color.black, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .stroke(Color.white.opacity(0.08), lineWidth: 1)
+            )
+            .shadow(color: Color.black.opacity(0.35), radius: 20, x: 0, y: 12)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+        }
     }
 }
 
 // MARK: - YouTube iFrame tam ekran WebView
-struct YouTubeWebViewFull: UIViewRepresentable {
+struct YouTubeWebView: UIViewRepresentable {
     let videoID: String
 
     func makeUIView(context: Context) -> WKWebView {
@@ -166,15 +213,14 @@ struct YouTubeWebViewFull: UIViewRepresentable {
     }
 
     func updateUIView(_ webView: WKWebView, context: Context) {
-        // Tam ekran iFrame
         let html = """
         <!DOCTYPE html>
         <html>
         <head>
-        <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no, width=device-width, height=device-height">
+        <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no, width=device-width">
         <style>
         html, body { margin:0; padding:0; background:black; width:100%; height:100%; overflow:hidden; }
-        #wrap { position:fixed; inset:0; }
+        #wrap { position:relative; width:100%; height:100%; }
         #player { position:absolute; inset:0; width:100%; height:100%; }
         </style>
         </head>
@@ -192,4 +238,8 @@ struct YouTubeWebViewFull: UIViewRepresentable {
         """
         webView.loadHTMLString(html, baseURL: nil)
     }
+}
+
+#Preview {
+    VideosListView()
 }

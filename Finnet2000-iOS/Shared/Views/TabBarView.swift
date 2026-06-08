@@ -1,60 +1,180 @@
 import SwiftUI
 
 struct TabBarView: View {
+    private let dependencyContainer: DependencyContainer
     @State private var selectedTab: TabItem = .home
-    var onLogout: (() -> Void)? = nil
+    @State private var isDrawerPresented = false
+    @State private var isSearchActive = false
+    @State private var navigateToAgreements = false
+    @State private var navigateToNotifications = false
+    @State private var navigateToNotificationsInbox = false
+    @State private var navigateToAccountInfo = false
+    @State private var navigateToPriceAlarms = false
+    @AppStorage("isDarkModeEnabled") private var isDarkModeEnabled = false
+    var onLogout: (() -> Void)?
+
+    init(dependencyContainer: DependencyContainer = .shared, onLogout: (() -> Void)? = nil) {
+        self.dependencyContainer = dependencyContainer
+        self.onLogout = onLogout
+    }
 
     var body: some View {
-        TabView(selection: $selectedTab) {
-            tabRoot {
-                HomeView()
-            }
-                .tabItem { Label("Ana Sayfa", systemImage: "house.fill") }
-                .tag(TabItem.home)
+        NavigationStack {
+            ZStack(alignment: .leading) {
+                TabView(selection: Binding(
+                    get: { selectedTab },
+                    set: { newTab in
+                        var t = Transaction()
+                        t.disablesAnimations = true
+                        withTransaction(t) { selectedTab = newTab }
+                    }
+                )) {
+                    tabRoot {
+                        HomeView(viewModel: dependencyContainer.makeHomeViewModel())
+                    }
+                        .tabItem { Label("Ana Sayfa", systemImage: "house.fill") }
+                        .tag(TabItem.home)
 
-            tabRoot {
-                NewsView()
-            }
-                .tabItem { Label("News", systemImage: "newspaper.fill") }
-                .tag(TabItem.news)
+                    tabRoot {
+                        NewsView()
+                    }
+                        .tabItem { Label("Haberler", systemImage: "newspaper.fill") }
+                        .tag(TabItem.news)
 
-            tabRoot {
-                AddView()
-            }
-                .tabItem { Label("Menu", systemImage: "line.3.horizontal") }
-                .tag(TabItem.add)
+                    tabRoot {
+                        AddView()
+                    }
+                        .tabItem { Label("Tarayıcı", systemImage: "line.3.horizontal") }
+                        .tag(TabItem.add)
 
-            tabRoot {
-                ListsView()
-            }
-                .tabItem { Label("Lists", systemImage: "list.bullet.rectangle.fill") }
-                .tag(TabItem.lists)
+                    tabRoot {
+                        ListsView()
+                    }
+                        .tabItem { Label("Listeler", systemImage: "list.bullet.rectangle.fill") }
+                        .tag(TabItem.lists)
 
-            tabRoot {
-                CompareView()
+                    tabRoot {
+                        CompareView()
+                    }
+                        .tabItem { Label("Karşılaştır", systemImage: "arrow.left.arrow.right") }
+                        .tag(TabItem.compare)
+                }
+                .tint(.blue)
+                .disabled(isDrawerPresented)
+
+                if isDrawerPresented {
+                    Color.black.opacity(0.18)
+                        .ignoresSafeArea()
+                        .transition(.opacity)
+                        .onTapGesture {
+                            closeDrawer()
+                        }
+
+                    SideDrawerView(
+                        isPresented: $isDrawerPresented,
+                        isDarkModeEnabled: $isDarkModeEnabled,
+                        onLogout: onLogout,
+                        onAccountInfoTap: { navigateToAccountInfo = true },
+                        onAgreementsTap: { navigateToAgreements = true },
+                        onNotificationsTap: { navigateToNotifications = true },
+                        onPriceAlarmsTap: { navigateToPriceAlarms = true }
+                    )
+                    .transition(.move(edge: .leading).combined(with: .opacity))
+                }
             }
-                .tabItem { Label("Compare", systemImage: "arrow.left.arrow.right") }
-                .tag(TabItem.compare)
+            .navigationDestination(isPresented: $isSearchActive) {
+                SearchView()
+            }
+            .navigationDestination(isPresented: $navigateToAgreements) {
+                UserAgreementsView()
+            }
+            .navigationDestination(isPresented: $navigateToAccountInfo) {
+                AccountInfoView()
+            }
+            .navigationDestination(isPresented: $navigateToPriceAlarms) {
+                PriceAlarmsView()
+            }
+            .navigationDestination(isPresented: $navigateToNotifications) {
+                NotificationPreferencesView()
+            }
+            .navigationDestination(isPresented: $navigateToNotificationsInbox) {
+                NotificationsInboxView()
+            }
         }
-        .tint(.blue)
+        .animation(.interactiveSpring(response: 0.32, dampingFraction: 0.84), value: isDrawerPresented)
+        .preferredColorScheme(isDarkModeEnabled ? .dark : .light)
+        .toolbar(.hidden, for: .navigationBar)
     }
 
     private func tabRoot<Content: View>(@ViewBuilder content: () -> Content) -> some View {
         VStack(spacing: 0) {
             NavigationHeaderView(
                 onMenuTap: {
-                    // Placeholder: side menu akışı bağlanacak.
+                    isDrawerPresented = true
+                },
+                onNotificationTap: {
+                    navigateToNotificationsInbox = true
                 },
                 onSearchTap: {
-                    // Placeholder: global search akışı bağlanacak.
+                    isSearchActive = true
                 }
             )
             content()
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
-        .edgesIgnoringSafeArea(.top)
+    }
+
+    private func closeDrawer() {
+        isDrawerPresented = false
     }
 }
 
-enum TabItem: Hashable {
+enum TabItem: Hashable, CaseIterable {
     case home, news, add, lists, compare
+
+    var title: String {
+        switch self {
+        case .home:
+            return "Ana Sayfa"
+        case .news:
+            return "Haberler"
+        case .add:
+            return "Tarayıcı"
+        case .lists:
+            return "Listelerim"
+        case .compare:
+            return "Karşılaştırma"
+        }
+    }
+
+    var subtitle: String {
+        switch self {
+        case .home:
+            return "Piyasa özeti ve canlı akış"
+        case .news:
+            return "Güncel finans içerikleri"
+        case .add:
+            return "Filtreleme ve keşif"
+        case .lists:
+            return "Takip ettiğiniz hisseler"
+        case .compare:
+            return "Şirketleri yan yana inceleyin"
+        }
+    }
+
+    var systemImage: String {
+        switch self {
+        case .home:
+            return "house.fill"
+        case .news:
+            return "newspaper.fill"
+        case .add:
+            return "line.3.horizontal.decrease.circle.fill"
+        case .lists:
+            return "list.bullet.rectangle.portrait.fill"
+        case .compare:
+            return "arrow.left.arrow.right.circle.fill"
+        }
+    }
 }
+

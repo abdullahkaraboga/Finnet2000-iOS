@@ -41,7 +41,7 @@ struct RadarChartView: View {
                 ForEach(1...gridLineCount, id: \.self) { step in
                     let fraction = Double(step) / Double(gridLineCount)
                     PolygonShape(center: center, radius: radius * fraction, sides: count)
-                        .stroke(Color.gray.opacity(0.2), lineWidth: 1)
+                        .stroke(Color.gray.opacity(0.35), lineWidth: 1)
                 }
 
                 // 🔹 Eksen çizgileri + Etiketler
@@ -56,7 +56,7 @@ struct RadarChartView: View {
                         path.move(to: center)
                         path.addLine(to: end)
                     }
-                    .stroke(Color.gray.opacity(0.25), lineWidth: 1)
+                    .stroke(Color.gray.opacity(0.4), lineWidth: 1)
 
                     let labelOffset: CGFloat = 22
                     let labelPoint = CGPoint(
@@ -65,8 +65,8 @@ struct RadarChartView: View {
                     )
 
                     Text(categories[i])
-                        .font(.caption2)
-                        .foregroundColor(.secondary)
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundColor(.primary.opacity(0.75))
                         .position(labelPoint)
                 }
 

@@ -1,7 +1,12 @@
 import Foundation
 import Alamofire
 
-final class AuthRepository {
+protocol AuthRepositoryProtocol {
+    func login(email: String, password: String, completion: @escaping (Result<LoginResponse, AFError>) -> Void)
+    func refreshToken(completion: @escaping (Result<LoginResponse, AFError>) -> Void)
+}
+
+final class AuthRepository: AuthRepositoryProtocol {
 
     struct Headers {
         static let json: HTTPHeaders = [
@@ -109,13 +114,23 @@ final class AuthRepository {
             completion(.failure(.explicitlyCancelled))
             return
         }
-        let url = "https://api.finnet2000.com/api/Authorization/RefreshToken"
+        var components = URLComponents(string: "https://api.finnet2000.com/api/Authorization/RefreshToken")
+        components?.queryItems = [
+            URLQueryItem(name: "refreshToken", value: refresh)
+        ]
+
+        guard let url = components?.url else {
+            completion(.failure(.invalidURL(url: "https://api.finnet2000.com/api/Authorization/RefreshToken")))
+            return
+        }
+
+        var request = URLRequest(url: url)
+        request.method = .post
+        request.headers = ["Accept": "application/json"]
+        request.httpBody = Data()
 
         NetworkManager.shared.authSession
-            .request(url,
-                     method: .get,
-                     parameters: ["refreshToken": refresh], // query string
-                     headers: Headers.json)
+            .request(request)
             .validate(statusCode: 200..<300)
             .responseDecodable(of: LoginResponse.self) { [weak self] (response: AFDataResponse<LoginResponse>) in
                 let raw = AFDataResponse<Data?>(

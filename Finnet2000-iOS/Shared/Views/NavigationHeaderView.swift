@@ -2,6 +2,7 @@ import SwiftUI
 
 struct NavigationHeaderView: View {
 	var onMenuTap: (() -> Void)? = nil
+	var onNotificationTap: (() -> Void)? = nil
 	var onSearchTap: (() -> Void)? = nil
 
 	var body: some View {
@@ -10,31 +11,32 @@ struct NavigationHeaderView: View {
 
 			Spacer(minLength: 12)
 
-			Text("finnet2000")
-				.font(.system(size: 20, weight: .bold, design: .rounded))
-				.foregroundStyle(Color.primary)
-				.lineLimit(1)
+			Image("finnet2000_logo_light")
+				.resizable()
+				.scaledToFit()
+				.frame(height: 45)
 
 			Spacer(minLength: 12)
 
-			headerButton(systemName: "magnifyingglass", action: onSearchTap)
+			HStack(spacing: 8) {
+				headerButton(systemName: "bell.fill", action: onNotificationTap)
+				headerButton(systemName: "magnifyingglass", action: onSearchTap)
+			}
 		}
 		.padding(.horizontal, 16)
 		.padding(.top, 10)
 		.padding(.bottom, 12)
-		.background(.ultraThinMaterial)
-		.overlay(alignment: .bottom) {
-			Divider()
-		}
+		.background(Color.black)
+		.frame(maxWidth: .infinity)
 	}
 
 	private func headerButton(systemName: String, action: (() -> Void)?) -> some View {
 		Button(action: { action?() }) {
 			Image(systemName: systemName)
 				.font(.system(size: 18, weight: .semibold))
-				.foregroundStyle(Color.primary)
+				.foregroundStyle(Color.white)
 				.frame(width: 40, height: 40)
-				.background(Color(.secondarySystemBackground), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+				.background(Color.white.opacity(0.15), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
 		}
 		.buttonStyle(.plain)
 	}

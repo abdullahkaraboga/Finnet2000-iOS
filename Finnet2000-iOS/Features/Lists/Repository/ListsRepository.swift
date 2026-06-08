@@ -25,5 +25,31 @@ final class ListsRepository {
                 completion(response.result)
             }
     }
-}
 
+    func getPortfolioDetail(portfolioId: Int,
+                            completion: @escaping (Result<APIPortfolioDetailResponse, AFError>) -> Void) {
+        let url = "https://api.finnet2000.com/api/Portfolio/GetPortfolioDetail"
+
+        NetworkManager.shared.authedSession
+            .request(url, method: .get, parameters: ["portfolioId": portfolioId])
+            .validate(statusCode: 200..<300)
+            .responseData { response in
+                switch response.result {
+                case .success(let data):
+                    do {
+                        let decoder = JSONDecoder()
+                        let value = try decoder.decode(APIPortfolioDetailResponse.self, from: data)
+                        completion(.success(value))
+                    } catch {
+                        if let afError = error as? AFError {
+                            completion(.failure(afError))
+                        } else {
+                            completion(.failure(AFError.responseSerializationFailed(reason: .decodingFailed(error: error))))
+                        }
+                    }
+                case .failure(let afError):
+                    completion(.failure(afError))
+                }
+            }
+    }
+}

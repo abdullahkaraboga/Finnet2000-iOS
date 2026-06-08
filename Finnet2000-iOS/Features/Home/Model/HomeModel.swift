@@ -2,7 +2,7 @@ import Foundation
 
 // MARK: - HomePageResponse
 
-struct HomePageResponse: Decodable {
+struct HomePageResponse: Decodable, Sendable {
     let contents: [ContentItem]
     let robofundResponse: [RobofundPortfolio]
     let ipos: [IPOItem]
@@ -32,7 +32,7 @@ struct HomePageResponse: Decodable {
 
 // MARK: - Content
 
-struct ContentItem: Decodable {
+struct ContentItem: Decodable, Sendable {
     let date: String
     let type: String
     let title: String
@@ -45,7 +45,7 @@ struct ContentItem: Decodable {
 
 // MARK: - Robofund
 
-struct RobofundPortfolio: Decodable {
+struct RobofundPortfolio: Decodable, Sendable {
     let portfolioId: Int
     let code: String
     let name: String
@@ -58,12 +58,12 @@ struct RobofundPortfolio: Decodable {
 
 // MARK: - IPO & ChargedStock
 
-struct IPOItem: Decodable {}
-struct ChargedStock: Decodable {}
+struct IPOItem: Decodable, Sendable {}
+struct ChargedStock: Decodable, Sendable {}
 
 // MARK: - Daily Index
 
-struct DailyIndex: Decodable {
+struct DailyIndex: Decodable, Sendable {
     let type: Int
     let typeName: String
     let indexName: String
@@ -75,7 +75,7 @@ struct DailyIndex: Decodable {
 
 // MARK: - Daily Index Statistics
 
-struct DailyIndexStatistics: Decodable {
+struct DailyIndexStatistics: Decodable, Sendable {
     let name: String
     let higherCount: Int
     let lowerCount: Int
@@ -86,14 +86,14 @@ struct DailyIndexStatistics: Decodable {
 
 // MARK: - Stock Stats Detail
 
-struct StockStatsDetail: Decodable {
+struct StockStatsDetail: Decodable, Sendable {
     let highest: [StockStat]
     let lowest: [StockStat]
     let mostVolumes: [StockStat]
     let mostAmounts: [StockStat]
 }
 
-struct StockStat: Decodable {
+struct StockStat: Decodable, Sendable {
     let code: String
     let logoPath: String
     let firstClosePrice: Double
@@ -105,12 +105,12 @@ struct StockStat: Decodable {
 
 // MARK: - Currency Price Info
 
-struct CurrencyPriceGroup: Decodable {
+struct CurrencyPriceGroup: Decodable, Sendable {
     let assetType: String
     let assetPrices: [CurrencyPrice]
 }
 
-struct CurrencyPrice: Decodable {
+struct CurrencyPrice: Decodable, Sendable {
     let code: String
     let name: String
     let price: Double
@@ -119,7 +119,7 @@ struct CurrencyPrice: Decodable {
 
 // MARK: - Annual Graph Info
 
-struct AnnualGraph: Decodable {
+struct AnnualGraph: Decodable, Sendable {
     let code: String
     let price: Double
     let dailyReturn: Double
@@ -131,7 +131,7 @@ struct AnnualGraph: Decodable {
 
 // MARK: - Tooltips
 
-struct Tooltips: Decodable {
+struct Tooltips: Decodable, Sendable {
     let robofund: String?
     let indexReturns: String?
     let amounts: String?

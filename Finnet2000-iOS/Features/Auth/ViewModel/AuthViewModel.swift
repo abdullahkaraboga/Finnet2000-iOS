@@ -10,10 +10,12 @@ final class AuthViewModel: ObservableObject {
     @Published var isLoggedIn: Bool = false
     @Published var errorMessage: String?
 
-    private let repository = AuthRepository()
+    private let repository: AuthRepositoryProtocol
     private var sessionExpiryCancellable: AnyCancellable?
 
-    init() {
+    init(repository: AuthRepositoryProtocol = AuthRepository()) {
+        self.repository = repository
+
         // Uygulama başlarken mevcut token varsa oturum açık say
         isLoggedIn = TokenManager.shared.accessToken != nil
 
