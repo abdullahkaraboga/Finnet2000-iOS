@@ -102,7 +102,7 @@ struct ListsView: View {
                                     Spacer()
 
                                     VStack(alignment: .trailing) {
-                                        Text(String(format: "%.2f ₺", stock.price))
+                                        Text(stock.price.compactCurrencyString())
                                             .font(.headline)
                                         Text(String(format: "%.2f%%", stock.return))
                                             .font(.subheadline)

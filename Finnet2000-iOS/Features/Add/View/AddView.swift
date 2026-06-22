@@ -5,7 +5,6 @@ struct AddView: View {
         ("Filtreleme", "line.3.horizontal.decrease.circle"),
         ("Sektörel Analiz", "chart.pie"),
         ("Teknik Tarayıcı", "magnifyingglass.circle"),
-        ("Hisse Detayı", "chart.bar.doc.horizontal")
     ]
 
     var body: some View {

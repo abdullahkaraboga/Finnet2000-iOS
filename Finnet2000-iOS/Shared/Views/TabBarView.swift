@@ -10,6 +10,7 @@ struct TabBarView: View {
     @State private var navigateToNotificationsInbox = false
     @State private var navigateToAccountInfo = false
     @State private var navigateToPriceAlarms = false
+    @State private var navigateToMatriksBridge = false
     @AppStorage("isDarkModeEnabled") private var isDarkModeEnabled = false
     var onLogout: (() -> Void)?
 
@@ -77,7 +78,8 @@ struct TabBarView: View {
                         onAccountInfoTap: { navigateToAccountInfo = true },
                         onAgreementsTap: { navigateToAgreements = true },
                         onNotificationsTap: { navigateToNotifications = true },
-                        onPriceAlarmsTap: { navigateToPriceAlarms = true }
+                        onPriceAlarmsTap: { navigateToPriceAlarms = true },
+                        onMatriksBridgeTap: { navigateToMatriksBridge = true }
                     )
                     .transition(.move(edge: .leading).combined(with: .opacity))
                 }
@@ -99,6 +101,9 @@ struct TabBarView: View {
             }
             .navigationDestination(isPresented: $navigateToNotificationsInbox) {
                 NotificationsInboxView()
+            }
+            .navigationDestination(isPresented: $navigateToMatriksBridge) {
+                MatriksBridgeView(postAuthDestination: .tradeMenu)
             }
         }
         .animation(.interactiveSpring(response: 0.32, dampingFraction: 0.84), value: isDrawerPresented)

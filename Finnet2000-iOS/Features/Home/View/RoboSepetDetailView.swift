@@ -484,12 +484,7 @@ private struct RSReturnCell: View {
     }
 
     private var formattedAmt: String {
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .decimal
-        formatter.minimumFractionDigits = 0
-        formatter.maximumFractionDigits = 0
-        formatter.groupingSeparator = "."
-        return (formatter.string(from: NSNumber(value: amount)) ?? "\(Int(amount))") + " ₺"
+        amount.compactCurrencyString(fractionDigits: 0)
     }
 }
 

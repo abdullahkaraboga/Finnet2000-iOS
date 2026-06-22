@@ -239,32 +239,16 @@ extension PortfolioDetailResponse {
 
 extension PortfolioDetailResponse {
     var totalValueFormatted: String {
-        let v = totalValue
-        if v >= 1_000 {
-            let k = v / 1_000
-            let formatter = NumberFormatter()
-            formatter.numberStyle = .decimal
-            formatter.minimumFractionDigits = 2
-            formatter.maximumFractionDigits = 2
-            formatter.decimalSeparator = ","
-            formatter.groupingSeparator = "."
-            return (formatter.string(from: NSNumber(value: k)) ?? "\(k)") + "BIN ₺"
-        }
-        return String(format: "%.2f ₺", v)
+        totalValue.compactCurrencyString()
     }
 }
 
 extension OpenPosition {
     var currentValueFormatted: String {
-        if currentValue >= 1_000 {
-            let k = currentValue / 1_000
-            let s = String(format: "%.2f", k).replacingOccurrences(of: ".", with: ",")
-            return s + "BIN ₺"
-        }
-        return String(format: "%.2f ₺", currentValue).replacingOccurrences(of: ".", with: ",")
+        currentValue.compactCurrencyString()
     }
 
     var costPriceFormatted: String {
-        String(format: "%.2f", costPrice).replacingOccurrences(of: ".", with: ",") + "₺"
+        costPrice.compactCurrencyString()
     }
 }

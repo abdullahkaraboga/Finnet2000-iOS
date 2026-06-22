@@ -617,7 +617,7 @@ private struct PDPositionCard: View {
                                     .font(.system(size: 12))
                                     .foregroundColor(.primary)
                                 Spacer()
-                                Text("\(lot.quantity)")
+                                Text(Double(lot.quantity).compactString(fractionDigits: 0))
                                     .font(.system(size: 12))
                                     .foregroundColor(.primary)
                                 Spacer()
@@ -675,7 +675,7 @@ private struct PDPositionCard: View {
     }
 
     private func formatPrice(_ v: Double) -> String {
-        String(format: "%.2f", v).replacingOccurrences(of: ".", with: ",") + "₺"
+        v.compactCurrencyString()
     }
 }
 
@@ -807,7 +807,7 @@ private struct PDPositionDetailSheet: View {
     }
 
     private func fmtPrice(_ v: Double) -> String {
-        String(format: "%.2f", v).replacingOccurrences(of: ".", with: ",") + "₺"
+        v.compactCurrencyString()
     }
 
     private func fmtPct(_ v: Double) -> String {

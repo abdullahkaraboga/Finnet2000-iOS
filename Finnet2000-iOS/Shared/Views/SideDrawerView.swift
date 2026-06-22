@@ -8,6 +8,7 @@ struct SideDrawerView: View {
     var onAgreementsTap: (() -> Void)? = nil
     var onNotificationsTap: (() -> Void)? = nil
     var onPriceAlarmsTap: (() -> Void)? = nil
+    var onMatriksBridgeTap: (() -> Void)? = nil
 
     @GestureState private var dragTranslation: CGFloat = 0
     @Environment(\.colorScheme) private var colorScheme
@@ -51,7 +52,10 @@ struct SideDrawerView: View {
 
                         drawerSection(title: "Yatırım") {
                             VStack(alignment: .leading, spacing: 0) {
-                                drawerRow(icon: "chart.line.uptrend.xyaxis", title: "Matriks Bridge")
+                                drawerRow(icon: "chart.line.uptrend.xyaxis", title: "Matriks Bridge", action: {
+                                    dismiss()
+                                    onMatriksBridgeTap?()
+                                })
 
                                 Text("Yatırım Hesabınıza Giriş Yapın")
                                     .font(.system(size: 13, weight: .medium))

@@ -6,8 +6,8 @@ struct StockDetailMockView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var selectedTab = "Özet"
     @State private var selectedSubTab = ""
-    @State private var showOpenPosition = false
     @State private var showAlarm = false
+    @State private var navigateToMatriksBridge = false
 
     private let tabs = ["Özet", "Finansallar", "Oranlar", "Sektörel Analiz"]
     private let subTabs: [String: [String]] = [
@@ -36,14 +36,17 @@ struct StockDetailMockView: View {
                 Spacer()
                 VStack(spacing: 0) {
                     Divider()
-                    HStack(spacing: 10) {
-                        sdActionButton("Alış", color: Color.sdGreen) {
-                            showOpenPosition = true
-                        }
-                        sdActionButton("Satış", color: Color.sdPink) {
-                            showOpenPosition = true
-                        }
+                    Button {
+                        navigateToMatriksBridge = true
+                    } label: {
+                        Text("Al / Sat")
+                            .font(.system(size: 17, weight: .bold))
+                            .foregroundStyle(.white)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 52)
+                            .background(Color.sdGreen, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
                     }
+                    .buttonStyle(.plain)
                     .padding(.horizontal, 16)
                     .padding(.top, 12)
                     .padding(.bottom, 28)
@@ -58,18 +61,21 @@ struct StockDetailMockView: View {
             }
         }
         .toolbar(.hidden, for: .navigationBar)
-        .sheet(isPresented: $showOpenPosition) {
-            PozisyonAcSheet { showOpenPosition = false }
-                .presentationDetents([.medium, .large])
-                .presentationDragIndicator(.visible)
-                .presentationCornerRadius(28)
-                .presentationBackground(.regularMaterial)
-        }
         .sheet(isPresented: $showAlarm) {
             AlarmOlusturSheet(isPresented: $showAlarm)
                 .presentationDetents([.medium])
                 .presentationDragIndicator(.visible)
                 .presentationCornerRadius(28)
+        }
+        .navigationDestination(isPresented: $navigateToMatriksBridge) {
+            MatriksBridgeView(
+                stockSymbol: SDData.symbol,
+                stockName: SDData.company,
+                stockPrice: SDData.price,
+                stockChange: SDData.change,
+                stockDate: SDData.date,
+                postAuthDestination: .orderEntry
+            )
         }
         .onChange(of: selectedTab) { _, newTab in
             selectedSubTab = subTabs[newTab]?.first ?? ""
@@ -92,7 +98,7 @@ struct StockDetailMockView: View {
                 .buttonStyle(.plain)
                 Spacer()
                 HStack(spacing: 10) {
-                    Button { showOpenPosition = true } label: {
+                    Button { navigateToMatriksBridge = true } label: {
                         sdNavButton("doc.text")
                     }
                     .buttonStyle(.plain)

@@ -679,13 +679,7 @@ struct SectoralAnalysisView: View {
     }
 
     private func fmtMoney(_ v: Double) -> String {
-        if v >= 1_000_000_000 {
-            let b = v / 1_000_000_000
-            return String(format: "%.2f", b).replacingOccurrences(of: ".", with: ",") + "Mr ₺"
-        } else {
-            let m = v / 1_000_000
-            return String(format: "%.2f", m).replacingOccurrences(of: ".", with: ",") + "Mn ₺"
-        }
+        v.compactCurrencyString()
     }
 }
 

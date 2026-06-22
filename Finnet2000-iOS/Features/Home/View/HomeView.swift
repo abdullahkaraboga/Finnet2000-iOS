@@ -43,13 +43,7 @@ extension Color {
 // MARK: - Formatters
 
 func formatCurrency(_ value: Double) -> String {
-    let formatter = NumberFormatter()
-    formatter.numberStyle = .decimal
-    formatter.minimumFractionDigits = 2
-    formatter.maximumFractionDigits = 2
-    formatter.groupingSeparator = "."
-    formatter.decimalSeparator = ","
-    return (formatter.string(from: NSNumber(value: value)) ?? "\(value)") + "₺"
+    value.compactCurrencyString()
 }
 
 func formatRatio(_ value: Double) -> String {
@@ -271,7 +265,7 @@ fileprivate struct LiveTickerItemView: View {
 
     private var displayPrice: String {
         guard let last = data?.last else { return "-" }
-        return String(format: "%.2f", last)
+        return last.compactString()
     }
 
     private var change: Double {
@@ -734,7 +728,7 @@ struct MostTransactionStocksView: View {
                         Text(stat.code)
                             .font(.system(size: 13, weight: .semibold))
                             .frame(maxWidth: .infinity, alignment: .leading)
-                        Text(typeIndex == 0 ? formatCurrency(stat.volume) : String(format: "%.0f", stat.amount))
+                        Text(typeIndex == 0 ? formatCurrency(stat.volume) : stat.amount.compactString(fractionDigits: 0))
                             .font(.system(size: 13))
                             .frame(maxWidth: .infinity, alignment: .center)
                         Text(formatCurrency(stat.lastClosePrice))

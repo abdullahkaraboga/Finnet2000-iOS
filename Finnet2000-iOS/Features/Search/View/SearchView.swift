@@ -95,9 +95,9 @@ private struct SearchStockRow: View {
             Spacer()
 
             VStack(alignment: .trailing, spacing: 2) {
-                Text(String(format: "%.2f ₺", stock.price))
+                Text(stock.price.compactCurrencyString())
                     .font(.headline)
-                Text(String(format: "%.2f", stock.value))
+                Text(stock.value.compactString())
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
