@@ -3,17 +3,17 @@ import Foundation
 // MARK: - HomePageResponse
 
 struct HomePageResponse: Decodable, Sendable {
-    let contents: [ContentItem]
-    let robofundResponse: [RobofundPortfolio]
-    let ipos: [IPOItem]
-    let chargedStocks: [ChargedStock]
-    let dailyIndexInfo: [DailyIndex]
-    let dailyIndexStatistics: DailyIndexStatistics
-    let stockStatsDetail: StockStatsDetail
-    let currencyPriceInfo: [CurrencyPriceGroup]
-    let annualGraphInfo: [AnnualGraph]
-    let currencyList: [String]
-    let tooltips: Tooltips
+    let contents: [ContentItem]?
+    let robofundResponse: [RobofundPortfolio]?
+    let ipos: [IPOItem]?
+    let chargedStocks: [ChargedStock]?
+    let dailyIndexInfo: [DailyIndex]?
+    let dailyIndexStatistics: DailyIndexStatistics?
+    let stockStatsDetail: StockStatsDetail?
+    let currencyPriceInfo: [CurrencyPriceGroup]?
+    let annualGraphInfo: [AnnualGraph]?
+    let currencyList: [String]?
+    let tooltips: Tooltips?
 
     enum CodingKeys: String, CodingKey {
         case contents
