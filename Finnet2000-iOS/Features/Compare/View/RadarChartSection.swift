@@ -78,11 +78,11 @@ struct RadarChartSection: View {
             guard let params = result[key]?.riskParams else { return [] }
             let limited = Array(params.prefix(Self.maxAxes))
             return (0..<axisCount).map { i in
-                let rawSelf = parseValue(limited[safe: i]?.value ?? "0")
+                let rawSelf = parseValue(limited[i].value ?? "0")
                 // Diğer hissedeki aynı eksendeki değerle karşılaştırarak normalize et
                 let axisMax = keys.compactMap { k -> Double? in
                     guard let p = result[k]?.riskParams else { return nil }
-                    return parseValue(Array(p.prefix(Self.maxAxes))[safe: i]?.value ?? "0")
+                    return parseValue(Array(p.prefix(Self.maxAxes))[i].value ?? "0")
                 }.max() ?? 1
                 return axisMax > 0 ? rawSelf / axisMax : 0
             }

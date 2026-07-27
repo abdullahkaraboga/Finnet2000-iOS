@@ -619,7 +619,7 @@ struct RSOtherPortfoliosSection: View {
 
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 12) {
-                    ForEach(others) { portfolio in
+                    ForEach(others, id: \.code) { portfolio in
                         RSOtherPortfolioCard(portfolio: portfolio)
                     }
                 }
@@ -698,3 +698,4 @@ struct RSSectionHeader: View {
 #Preview {
     RoboSepetDetailView(detail: .mock, onBack: {})
 }
+

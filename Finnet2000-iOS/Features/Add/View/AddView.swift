@@ -1,22 +1,33 @@
 import SwiftUI
 
 struct AddView: View {
-    private let menuItems: [(title: String, icon: String)] = [
-        ("Filtreleme", "line.3.horizontal.decrease.circle"),
-        ("Sektörel Analiz", "chart.pie"),
-        ("Teknik Tarayıcı", "magnifyingglass.circle"),
-    ]
+    private enum MenuItem: String, CaseIterable {
+        case filtration = "Filtreleme"
+        case sectoralAnalysis = "Sektörel Analiz"
+        case technicalScanner = "Teknik Tarayıcı"
+
+        var icon: String {
+            switch self {
+            case .filtration:
+                return "line.3.horizontal.decrease.circle"
+            case .sectoralAnalysis:
+                return "chart.pie"
+            case .technicalScanner:
+                return "magnifyingglass.circle"
+            }
+        }
+    }
 
     var body: some View {
         NavigationStack {
             List {
-                ForEach(menuItems, id: \.title) { item in
-                    NavigationLink(destination: EmptyView()) {
+                ForEach(MenuItem.allCases, id: \.self) { item in
+                    NavigationLink(destination: destination(for: item)) {
                         HStack(spacing: 14) {
                             Image(systemName: item.icon)
                                 .foregroundStyle(.blue)
                                 .frame(width: 28)
-                            Text(item.title)
+                            Text(item.rawValue)
                                 .font(.body)
                             Spacer()
                                 .foregroundStyle(.secondary)
@@ -30,5 +41,17 @@ struct AddView: View {
             .listStyle(.insetGrouped)
         }
         .toolbar(.hidden, for: .navigationBar)
+    }
+
+    @ViewBuilder
+    private func destination(for item: MenuItem) -> some View {
+        switch item {
+        case .filtration:
+            StockScannerView()
+        case .sectoralAnalysis:
+            SectoralAnalysisView()
+        case .technicalScanner:
+            TeknikTarayiciView()
+        }
     }
 }

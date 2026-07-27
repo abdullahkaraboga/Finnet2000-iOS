@@ -32,17 +32,22 @@ private func signalWeight(_ value: String) -> Font.Weight {
 
 private enum TeknikMockData {
     static let alRows: [TeknikScannerRow] = [
-        TeknikScannerRow(code: "GEDZA", ma5Signal: "-",   ma5To20Signal: "AL",  ma20Signal: "AL",  rsiSignal: "-",   macdSignal: "AL",  bollingerSignal: "-"),
-        TeknikScannerRow(code: "OTKAR", ma5Signal: "-",   ma5To20Signal: "-",   ma20Signal: "-",   rsiSignal: "AL",  macdSignal: "-",   bollingerSignal: "AL"),
-        TeknikScannerRow(code: "AKCNS", ma5Signal: "AL",  ma5To20Signal: "-",   ma20Signal: "AL",  rsiSignal: "-",   macdSignal: "-",   bollingerSignal: "-"),
-        TeknikScannerRow(code: "BMSTL", ma5Signal: "AL",  ma5To20Signal: "-",   ma20Signal: "-",   rsiSignal: "AL",  macdSignal: "AL",  bollingerSignal: "-"),
-        TeknikScannerRow(code: "MAALT", ma5Signal: "AL",  ma5To20Signal: "-",   ma20Signal: "-",   rsiSignal: "-",   macdSignal: "AL",  bollingerSignal: "-"),
-        TeknikScannerRow(code: "RYSAS", ma5Signal: "AL",  ma5To20Signal: "-",   ma20Signal: "AL",  rsiSignal: "AL",  macdSignal: "-",   bollingerSignal: "-"),
-        TeknikScannerRow(code: "ADEL",  ma5Signal: "sat", ma5To20Signal: "sat", ma20Signal: "-",   rsiSignal: "AL",  macdSignal: "-",   bollingerSignal: "AL"),
-        TeknikScannerRow(code: "ATEKS", ma5Signal: "sat", ma5To20Signal: "sat", ma20Signal: "-",   rsiSignal: "AL",  macdSignal: "-",   bollingerSignal: "-"),
-        TeknikScannerRow(code: "BINBN", ma5Signal: "sat", ma5To20Signal: "sat", ma20Signal: "AL",  rsiSignal: "-",   macdSignal: "-",   bollingerSignal: "-"),
-        TeknikScannerRow(code: "DZGYO", ma5Signal: "sat", ma5To20Signal: "AL",  ma20Signal: "-",   rsiSignal: "AL",  macdSignal: "AL",  bollingerSignal: "-"),
-        TeknikScannerRow(code: "YGGYO", ma5Signal: "sat", ma5To20Signal: "SAT", ma20Signal: "-",   rsiSignal: "-",   macdSignal: "-",   bollingerSignal: "AL"),
+        TeknikScannerRow(code: "ALCAR", ma5Signal: "-",   ma5To20Signal: "AL",  ma20Signal: "-",   rsiSignal: "-",   macdSignal: "-",   bollingerSignal: "-"),
+        TeknikScannerRow(code: "BESLR", ma5Signal: "-",   ma5To20Signal: "AL",  ma20Signal: "-",   rsiSignal: "-",   macdSignal: "-",   bollingerSignal: "-"),
+        TeknikScannerRow(code: "BIENY", ma5Signal: "-",   ma5To20Signal: "-",   ma20Signal: "-",   rsiSignal: "-",   macdSignal: "-",   bollingerSignal: "-"),
+        TeknikScannerRow(code: "BMSTL", ma5Signal: "-",   ma5To20Signal: "-",   ma20Signal: "-",   rsiSignal: "-",   macdSignal: "-",   bollingerSignal: "-"),
+        TeknikScannerRow(code: "EGPRO", ma5Signal: "-",   ma5To20Signal: "al",  ma20Signal: "-",   rsiSignal: "-",   macdSignal: "-",   bollingerSignal: "-"),
+        TeknikScannerRow(code: "ENERY", ma5Signal: "-",   ma5To20Signal: "-",   ma20Signal: "-",   rsiSignal: "-",   macdSignal: "-",   bollingerSignal: "-"),
+        TeknikScannerRow(code: "EYGYO", ma5Signal: "-",   ma5To20Signal: "sat", ma20Signal: "-",   rsiSignal: "-",   macdSignal: "-",   bollingerSignal: "-"),
+        TeknikScannerRow(code: "KARSN", ma5Signal: "-",   ma5To20Signal: "AL",  ma20Signal: "-",   rsiSignal: "-",   macdSignal: "-",   bollingerSignal: "-"),
+        TeknikScannerRow(code: "KLYPV", ma5Signal: "-",   ma5To20Signal: "AL",  ma20Signal: "-",   rsiSignal: "-",   macdSignal: "-",   bollingerSignal: "-"),
+        TeknikScannerRow(code: "KRPLS", ma5Signal: "-",   ma5To20Signal: "-",   ma20Signal: "-",   rsiSignal: "-",   macdSignal: "-",   bollingerSignal: "-"),
+        TeknikScannerRow(code: "SELVA", ma5Signal: "-",   ma5To20Signal: "-",   ma20Signal: "-",   rsiSignal: "-",   macdSignal: "-",   bollingerSignal: "-"),
+        TeknikScannerRow(code: "ULUUN", ma5Signal: "-",   ma5To20Signal: "AL",  ma20Signal: "-",   rsiSignal: "-",   macdSignal: "-",   bollingerSignal: "-"),
+        TeknikScannerRow(code: "VSNMD", ma5Signal: "-",   ma5To20Signal: "AL",  ma20Signal: "-",   rsiSignal: "-",   macdSignal: "-",   bollingerSignal: "-"),
+        TeknikScannerRow(code: "YAYLA", ma5Signal: "-",   ma5To20Signal: "sat", ma20Signal: "-",   rsiSignal: "-",   macdSignal: "-",   bollingerSignal: "-"),
+        TeknikScannerRow(code: "AKMGY", ma5Signal: "AL",  ma5To20Signal: "al",  ma20Signal: "-",   rsiSignal: "-",   macdSignal: "-",   bollingerSignal: "-"),
+        TeknikScannerRow(code: "ANHYT", ma5Signal: "AL",  ma5To20Signal: "AL",  ma20Signal: "-",   rsiSignal: "-",   macdSignal: "-",   bollingerSignal: "-"),
     ]
 
     static let satRows: [TeknikScannerRow] = [
@@ -109,18 +114,19 @@ struct TeknikTarayiciView: View {
 
     var body: some View {
         ZStack(alignment: .bottom) {
+            Color(.systemGroupedBackground).ignoresSafeArea()
+
             VStack(spacing: 0) {
                 navBar
                 segmentedControl
                 tableContent
             }
-            .background(Color(.systemBackground))
 
             floatingFilterButton
         }
         .navigationBarHidden(true)
         .sheet(isPresented: $showFilterSheet) {
-            FilterSheetPlaceholder()
+            TeknikFilterSheet()
         }
     }
 
@@ -139,20 +145,25 @@ struct TeknikTarayiciView: View {
             Spacer()
 
             Text("Teknik Tarayıcı")
-                .font(.system(size: 17, weight: .bold))
+                .font(.system(size: 18, weight: .semibold))
                 .foregroundColor(.white)
 
             Spacer()
 
             Button {} label: {
-                Image(systemName: "info.circle")
-                    .font(.system(size: 17))
-                    .foregroundColor(.white)
-                    .frame(width: 40, height: 40)
+                ZStack {
+                    Circle()
+                        .fill(Color.white)
+                        .frame(width: 40, height: 40)
+                    Image(systemName: "info")
+                        .font(.system(size: 17, weight: .bold))
+                        .foregroundColor(.black)
+                }
+                .frame(width: 40, height: 40)
             }
             .buttonStyle(.plain)
         }
-        .padding(.horizontal, 8)
+        .padding(.horizontal, 14)
         .padding(.vertical, 10)
         .background(Color.black.ignoresSafeArea(edges: .top))
     }
@@ -169,10 +180,13 @@ struct TeknikTarayiciView: View {
                           label: "Sat")
         }
         .padding(4)
-        .background(Color(.systemGray6), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-        .padding(.horizontal, 16)
-        .padding(.vertical, 10)
-        .background(Color(.systemBackground))
+        .background(Color.white, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .stroke(Color(.systemGray5), lineWidth: 1)
+        )
+        .padding(.horizontal, 28)
+        .padding(.vertical, 12)
     }
 
     private func segmentButton(tab: ScanTab, iconName: String, label: String) -> some View {
@@ -246,7 +260,7 @@ struct TeknikTarayiciView: View {
             HStack(spacing: 0) {
                 ForEach(columns.indices, id: \.self) { i in
                     Text(columns[i].header)
-                        .font(.system(size: 12, weight: .bold))
+                        .font(.system(size: 14, weight: .bold))
                         .foregroundColor(.primary)
                         .multilineTextAlignment(.leading)
                         .lineLimit(2)
@@ -259,8 +273,8 @@ struct TeknikTarayiciView: View {
             .frame(width: visibleScrollWidth, alignment: .leading)
             .clipped()
         }
-        .padding(.vertical, 10)
-        .background(Color(.systemBackground))
+        .padding(.vertical, 12)
+        .background(Color.white)
         .overlay(alignment: .bottom) { Divider() }
     }
 
@@ -289,8 +303,8 @@ struct TeknikTarayiciView: View {
             .frame(width: visibleScrollWidth, alignment: .leading)
             .clipped()
         }
-        .padding(.vertical, 12)
-        .background(idx % 2 == 1 ? Color(.systemGray6).opacity(0.5) : Color(.systemBackground))
+        .padding(.vertical, 14)
+        .background(idx % 2 == 1 ? Color(.systemGray6).opacity(0.38) : Color.white)
     }
 
     // MARK: - Floating Filter Button
@@ -318,40 +332,224 @@ struct TeknikTarayiciView: View {
     }
 }
 
-// MARK: - Filter Sheet Placeholder
+// MARK: - Filter Sheet
 
-private struct FilterSheetPlaceholder: View {
+private struct TeknikFilterSheet: View {
     @Environment(\.dismiss) private var dismiss
 
+    @State private var ulusalExpanded    = true
+    @State private var sektorelExpanded  = true
+    @State private var sektorlerExpanded = true
+    @State private var selectedItems: Set<String> = []
+    @State private var ulusalPage    = 0
+    @State private var sektorelPage  = 0
+    @State private var sektorlerPage = 0
+
+    private let ulusalItems: [String] = [
+        "XU100", "XU050", "XU030", "XUTUM", "XIKIU",
+        "XKURY", "XYUZO", "XTUMY"
+    ]
+    private let sektorelItems: [String] = [
+        "XUSIN", "XGIDA", "XTEKS", "XKAGT", "XKMYA",
+        "XTAST", "XMANA", "XMESY"
+    ]
+    private let sektorlerItems: [String] = [
+        "Madencilik ve Kıymetli Maden", "Tekstil Ürünleri",
+        "Deri ve Benzer Ürünler",       "Giyim Eşyası",
+        "Orman Ürünleri Ve Mobilya",    "Boya",
+        "Gübre ve Zirai Ürünler",       "İlaç&Sağlık"
+    ]
+
     var body: some View {
-        NavigationStack {
-            List {
-                Section("Endeks") {
-                    Text("BIST 30")
-                    Text("BIST 50")
-                    Text("BIST 100")
-                    Text("BIST Tümü")
+        VStack(spacing: 0) {
+            // Header
+            HStack {
+                Text("Tarayıcı")
+                    .font(.system(size: 26, weight: .bold))
+                Spacer()
+                Button { dismiss() } label: {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 15, weight: .medium))
+                        .foregroundColor(.primary)
+                        .frame(width: 34, height: 34)
+                        .background(Color(.systemGray5), in: Circle())
                 }
-                Section("Sektör") {
-                    Text("Bankacılık")
-                    Text("Teknoloji")
-                    Text("Perakende")
-                    Text("Enerji")
-                    Text("Sanayi")
-                }
+                .buttonStyle(.plain)
             }
-            .navigationTitle("Endeks/Sektör Filtrele")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Uygula") { dismiss() }
-                        .foregroundColor(Color.midGreen)
+            .padding(.horizontal, 20)
+            .padding(.top, 24)
+            .padding(.bottom, 4)
+
+            ScrollView(showsIndicators: false) {
+                VStack(alignment: .leading, spacing: 0) {
+                    sectionView(
+                        title: "Ulusal Endeksler",
+                        items: ulusalItems,
+                        isExpanded: $ulusalExpanded,
+                        currentPage: $ulusalPage,
+                        totalDots: 5,
+                        itemsPerRow: 5
+                    )
+                    sectionView(
+                        title: "Sektörel Endeksler",
+                        items: sektorelItems,
+                        isExpanded: $sektorelExpanded,
+                        currentPage: $sektorelPage,
+                        totalDots: 6,
+                        itemsPerRow: 5
+                    )
+                    sectionView(
+                        title: "Sektörler",
+                        items: sektorlerItems,
+                        isExpanded: $sektorlerExpanded,
+                        currentPage: $sektorlerPage,
+                        totalDots: 9,
+                        itemsPerRow: 2
+                    )
                 }
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("İptal") { dismiss() }
+                .padding(.bottom, 16)
+            }
+
+            // Kaydet button
+            Button { dismiss() } label: {
+                Text("Kaydet")
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 18)
+                    .background(Color.midGreen)
+                    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+            }
+            .buttonStyle(.plain)
+            .padding(.horizontal, 20)
+            .padding(.vertical, 16)
+        }
+        .background(Color(.systemBackground))
+    }
+
+    @ViewBuilder
+    private func sectionView(
+        title: String,
+        items: [String],
+        isExpanded: Binding<Bool>,
+        currentPage: Binding<Int>,
+        totalDots: Int,
+        itemsPerRow: Int
+    ) -> some View {
+        let pages = makePages(items: items, itemsPerPage: 10)
+
+        VStack(alignment: .leading, spacing: 0) {
+            Button {
+                withAnimation(.easeInOut(duration: 0.22)) {
+                    isExpanded.wrappedValue.toggle()
+                }
+            } label: {
+                HStack(spacing: 10) {
+                    Image(systemName: "chevron.up")
+                        .font(.system(size: 14, weight: .semibold))
+                        .rotationEffect(.degrees(isExpanded.wrappedValue ? 0 : -180))
+                    Text(title)
+                        .font(.system(size: 17, weight: .semibold))
+                    Spacer()
+                }
+                .foregroundColor(.primary)
+                .padding(.horizontal, 20)
+                .padding(.vertical, 16)
+            }
+            .buttonStyle(.plain)
+
+            if isExpanded.wrappedValue {
+                VStack(spacing: 12) {
+                    TabView(selection: currentPage) {
+                        ForEach(pages.indices, id: \.self) { pi in
+                            chipPageView(items: pages[pi], itemsPerRow: itemsPerRow)
+                                .tag(pi)
+                                .padding(.horizontal, 20)
+                        }
+                    }
+                    .tabViewStyle(.page(indexDisplayMode: .never))
+                    .frame(height: chipGridHeight(
+                        itemCount: pages.first?.count ?? 0,
+                        itemsPerRow: itemsPerRow
+                    ))
+
+                    pageDotsView(total: totalDots, current: currentPage.wrappedValue)
+                        .padding(.bottom, 16)
                 }
             }
         }
+    }
+
+    private func makePages(items: [String], itemsPerPage: Int) -> [[String]] {
+        stride(from: 0, to: items.count, by: itemsPerPage).map {
+            Array(items[$0..<min($0 + itemsPerPage, items.count)])
+        }
+    }
+
+    @ViewBuilder
+    private func chipPageView(items: [String], itemsPerRow: Int) -> some View {
+        let rows = stride(from: 0, to: items.count, by: itemsPerRow).map {
+            Array(items[$0..<min($0 + itemsPerRow, items.count)])
+        }
+        VStack(alignment: .leading, spacing: 10) {
+            ForEach(rows.indices, id: \.self) { ri in
+                HStack(spacing: 8) {
+                    ForEach(rows[ri], id: \.self) { item in
+                        chipToggle(item)
+                    }
+                    Spacer(minLength: 0)
+                }
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(.vertical, 3)
+    }
+
+    private func chipToggle(_ item: String) -> some View {
+        Button {
+            if selectedItems.contains(item) {
+                selectedItems.remove(item)
+            } else {
+                selectedItems.insert(item)
+            }
+        } label: {
+            let isSelected = selectedItems.contains(item)
+            Text(item)
+                .font(.system(size: 13, weight: .medium))
+                .foregroundColor(.primary)
+                .lineLimit(1)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 12)
+                .frame(minHeight: 42)
+                .background(Color(.systemBackground))
+                .clipShape(Capsule())
+                .overlay(
+                    Capsule().stroke(
+                        isSelected ? Color.midGreen : Color(.systemGray4),
+                        lineWidth: isSelected ? 1.5 : 1
+                    )
+                )
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func chipGridHeight(itemCount: Int, itemsPerRow: Int) -> CGFloat {
+        guard itemCount > 0 else { return 44 }
+        let rows = Int(ceil(Double(itemCount) / Double(itemsPerRow)))
+        let chipH: CGFloat = 42
+        let spacing: CGFloat = 10
+        return CGFloat(rows) * chipH + CGFloat(max(0, rows - 1)) * spacing + 6
+    }
+
+    private func pageDotsView(total: Int, current: Int) -> some View {
+        HStack(spacing: 6) {
+            ForEach(0..<total, id: \.self) { i in
+                Capsule()
+                    .fill(i == current ? Color.midGreen : Color(.systemGray4))
+                    .frame(width: i == current ? 22 : 8, height: 8)
+            }
+        }
+        .padding(.horizontal, 20)
     }
 }
 

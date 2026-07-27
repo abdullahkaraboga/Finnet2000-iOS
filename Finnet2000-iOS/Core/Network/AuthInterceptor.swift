@@ -68,7 +68,6 @@ final class AuthInterceptor: RequestInterceptor {
 
         // Refresh token mevcut değilse direkt logout — gereksiz API çağrısı yapma
         guard TokenManager.shared.refreshToken != nil else {
-            debugPrint("🔐❌ [AuthInterceptor] Refresh token bulunamadı. Oturum sonlandırılıyor.")
             TokenManager.shared.clearTokens()
             handleSessionExpired()
             completion(.doNotRetry)
@@ -77,7 +76,6 @@ final class AuthInterceptor: RequestInterceptor {
 
         // Retry limitini aşmışsa vazgeç
         guard request.retryCount < retryLimit else {
-            debugPrint("🔁❌ Retry limit exceeded for \(absolute)")
             handleSessionExpired()
             completion(.doNotRetry)
             return
@@ -95,8 +93,6 @@ final class AuthInterceptor: RequestInterceptor {
         isRefreshing = true
         lock.unlock()
 
-        debugPrint("🔐 [AuthInterceptor] 401 alındı, token yenileniyor… (\(absolute))")
-
         authRepository.refreshToken { [weak self] result in
             guard let self else { return }
 
@@ -108,11 +104,9 @@ final class AuthInterceptor: RequestInterceptor {
 
             switch result {
             case .success:
-                debugPrint("🔐✅ Token yenilendi, \(queued.count) istek yeniden gönderiliyor.")
                 queued.forEach { $0(.retry) }
 
             case .failure(let err):
-                debugPrint("🔐❌ Token yenileme başarısız: \(err). Oturum sonlandırılıyor.")
                 TokenManager.shared.clearTokens()
                 queued.forEach { $0(.doNotRetry) }
                 self.handleSessionExpired()

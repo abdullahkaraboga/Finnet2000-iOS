@@ -9,14 +9,14 @@ struct NavigationHeaderView: View {
 		HStack(spacing: 16) {
 			headerButton(systemName: "line.3.horizontal", action: onMenuTap)
 
-			Spacer(minLength: 12)
+			Spacer()
 
-			Image("finnet2000_logo_light")
+			Image("finnet2000_logo_dark")
 				.resizable()
 				.scaledToFit()
-				.frame(height: 45)
+                .frame(width: 100, height: 40).padding(.leading,42)
 
-			Spacer(minLength: 12)
+			Spacer()
 
 			HStack(spacing: 8) {
 				headerButton(systemName: "bell.fill", action: onNotificationTap)
@@ -26,7 +26,7 @@ struct NavigationHeaderView: View {
 		.padding(.horizontal, 16)
 		.padding(.top, 10)
 		.padding(.bottom, 12)
-		.background(Color.black)
+		.background(Color(.systemBackground))
 		.frame(maxWidth: .infinity)
 	}
 
@@ -34,9 +34,9 @@ struct NavigationHeaderView: View {
 		Button(action: { action?() }) {
 			Image(systemName: systemName)
 				.font(.system(size: 18, weight: .semibold))
-				.foregroundStyle(Color.white)
+				.foregroundStyle(Color.black)
 				.frame(width: 40, height: 40)
-				.background(Color.white.opacity(0.15), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+				.background(Color.black.opacity(0.1), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
 		}
 		.buttonStyle(.plain)
 	}

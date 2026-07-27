@@ -90,9 +90,9 @@ struct StockDetailMockView: View {
                 Button { dismiss() } label: {
                     Image(systemName: "chevron.left")
                         .font(.system(size: 17, weight: .semibold))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(Color.sdDark)
                         .frame(width: 40, height: 40)
-                        .background(Color.white.opacity(0.15),
+                        .background(Color(.systemBackground),
                                     in: RoundedRectangle(cornerRadius: 12, style: .continuous))
                 }
                 .buttonStyle(.plain)
@@ -111,6 +111,8 @@ struct StockDetailMockView: View {
             }
             .padding(.horizontal, 16)
             .padding(.top, 10)
+            .background(Color(.systemBackground))
+
 
             HStack(spacing: 12) {
                 RoundedRectangle(cornerRadius: 8)
@@ -124,37 +126,38 @@ struct StockDetailMockView: View {
                 VStack(alignment: .leading, spacing: 3) {
                     Text(SDData.symbol)
                         .font(.system(size: 17, weight: .bold))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(Color.sdDark)
                     Text(SDData.company)
                         .font(.system(size: 11))
-                        .foregroundStyle(Color.white.opacity(0.5))
+                        .foregroundStyle(Color.secondary)
                         .lineLimit(1)
                 }
                 Spacer()
                 VStack(alignment: .trailing, spacing: 3) {
                     Text(SDData.price)
                         .font(.system(size: 16, weight: .bold))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(Color.sdDark)
                     Text(SDData.change)
                         .font(.system(size: 12, weight: .semibold))
                         .foregroundStyle(Color.sdGreen)
                     Text(SDData.date)
                         .font(.system(size: 10))
-                        .foregroundStyle(Color.white.opacity(0.4))
+                        .foregroundStyle(Color.secondary)
                 }
             }
             .padding(.horizontal, 16)
             .padding(.top, 4)
             .padding(.bottom, 16)
-        }.background(.black)
+        }.background(Color(.systemBackground))
+
     }
 
     private func sdNavButton(_ systemName: String) -> some View {
         Image(systemName: systemName)
             .font(.system(size: 16, weight: .semibold))
-            .foregroundStyle(.white)
+            .foregroundStyle(Color.sdDark)
             .frame(width: 40, height: 40)
-            .background(Color.white.opacity(0.15),
+            .background(Color(.systemBackground),
                         in: RoundedRectangle(cornerRadius: 12, style: .continuous))
     }
 

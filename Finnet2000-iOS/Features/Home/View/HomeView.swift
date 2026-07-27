@@ -143,7 +143,7 @@ struct DarkHeaderView: View {
     VStack(spacing: 0) {
       // Banner slider + dots
       ZStack {
-        Color.black
+          Color(.systemBackground)
 
         VStack(spacing: 10) {
           // Banner slider
@@ -255,7 +255,7 @@ private struct TickerGridView: View {
               .frame(maxWidth: .infinity)
           }
         }
-        .background(rowIdx % 2 == 0 ? Color(white: 0.08) : Color(white: 0.13))
+        .background(Color(.systemGray5) )
       }
     }
   }
@@ -912,3 +912,4 @@ struct HomePageScreen_Previews: PreviewProvider {
 // MARK: - Backward compatibility alias
 
 typealias HomeView = HomePageScreen
+

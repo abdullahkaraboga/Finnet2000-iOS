@@ -19,21 +19,6 @@ final class AuthRepository: AuthRepositoryProtocol {
         ]
     }
 
-    private func logResponse(_ response: AFDataResponse<Data?>, label: String) {
-        let url = response.request?.url?.absoluteString ?? "-"
-        let status = response.response?.statusCode ?? 0
-        debugPrint("⬅️ [\(label)] STATUS: \(status) URL: \(url)")
-        if let headers = response.response?.allHeaderFields {
-            debugPrint("HEADERS: \(headers)")
-        }
-        if let data = response.data, let text = String(data: data, encoding: .utf8) {
-            debugPrint("RESPONSE BODY: \(text)")
-        }
-        if let error = response.error {
-            debugPrint("ERROR: \(error)")
-        }
-    }
-
     func login(email: String, password: String, completion: @escaping (Result<LoginResponse, AFError>) -> Void) {
         let url = "https://api.finnet2000.com/api/Authorization/Login"
         // 1) JSON dene
@@ -45,17 +30,6 @@ final class AuthRepository: AuthRepositoryProtocol {
                      headers: Headers.json)
             .validate(statusCode: 200..<300)
             .responseDecodable(of: LoginResponse.self) { [weak self] (response: AFDataResponse<LoginResponse>) in
-                // Ham response’u da ayrıca loglayalım
-                let raw = AFDataResponse<Data?>(
-                    request: response.request,
-                    response: response.response,
-                    data: response.data,
-                    metrics: response.metrics,
-                    serializationDuration: response.serializationDuration,
-                    result: response.result.map { _ in Data() } // result’u korumak istemiyoruz, sadece data/log için
-                )
-                self?.logResponse(raw, label: "LOGIN(JSON)")
-
                 switch response.result {
                 case .success(let tokens):
                     TokenManager.shared.saveTokens(
@@ -84,17 +58,7 @@ final class AuthRepository: AuthRepositoryProtocol {
                      encoder: URLEncodedFormParameterEncoder.default,
                      headers: Headers.form)
             .validate(statusCode: 200..<300)
-            .responseDecodable(of: LoginResponse.self) { [weak self] (response: AFDataResponse<LoginResponse>) in
-                let raw = AFDataResponse<Data?>(
-                    request: response.request,
-                    response: response.response,
-                    data: response.data,
-                    metrics: response.metrics,
-                    serializationDuration: response.serializationDuration,
-                    result: response.result.map { _ in Data() }
-                )
-                self?.logResponse(raw, label: "LOGIN(FORM)")
-
+            .responseDecodable(of: LoginResponse.self) { (response: AFDataResponse<LoginResponse>) in
                 switch response.result {
                 case .success(let tokens):
                     TokenManager.shared.saveTokens(
@@ -132,17 +96,7 @@ final class AuthRepository: AuthRepositoryProtocol {
         NetworkManager.shared.authSession
             .request(request)
             .validate(statusCode: 200..<300)
-            .responseDecodable(of: LoginResponse.self) { [weak self] (response: AFDataResponse<LoginResponse>) in
-                let raw = AFDataResponse<Data?>(
-                    request: response.request,
-                    response: response.response,
-                    data: response.data,
-                    metrics: response.metrics,
-                    serializationDuration: response.serializationDuration,
-                    result: response.result.map { _ in Data() }
-                )
-                self?.logResponse(raw, label: "REFRESH")
-
+            .responseDecodable(of: LoginResponse.self) { (response: AFDataResponse<LoginResponse>) in
                 switch response.result {
                 case .success(let tokens):
                     TokenManager.shared.saveTokens(
@@ -150,10 +104,8 @@ final class AuthRepository: AuthRepositoryProtocol {
                         refreshToken: tokens.refreshToken,
                         expiresIn: tokens.expiresIn
                     )
-                    debugPrint("🔐✅ [REFRESH] Yeni token kaydedildi.")
                     completion(.success(tokens))
                 case .failure(let error):
-                    debugPrint("🔐❌ [REFRESH] Decode/network hatası: \(error)")
                     completion(.failure(error))
                 }
             }

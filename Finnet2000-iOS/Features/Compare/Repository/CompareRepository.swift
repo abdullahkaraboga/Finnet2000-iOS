@@ -5,17 +5,6 @@ import Alamofire
 /// ViewModel sadece bu repository ile haberleşir.
 final class ComparisonRepository {
 
-    // MARK: - Ortak Yardımcı (hata ayıklama)
-    private func debugPrintResponse(_ data: Data?, label: String) {
-        #if DEBUG
-        if let data, let text = String(data: data, encoding: .utf8) {
-            debugPrint("📦 \(label) raw JSON:\n\(text)")
-        } else {
-            debugPrint("📦 \(label): No data or non-UTF8 payload.")
-        }
-        #endif
-    }
-
     // MARK: - 1️⃣ Hisse Listesi Getir
     func fetchStockList() async throws -> [StockListItem] {
         let url = "https://api.finnet2000.com/api/Comparison/StockList"
@@ -25,8 +14,6 @@ final class ComparisonRepository {
             .validate(statusCode: 200..<300)
             .serializingDecodable([StockListItem].self)
             .response
-
-        debugPrintResponse(response.data, label: "StockList")
 
         switch response.result {
         case .success(let items):
@@ -49,8 +36,6 @@ final class ComparisonRepository {
             .validate(statusCode: 200..<300)
             .serializingDecodable(CompareStocksResponse.self)
             .response
-
-        debugPrintResponse(response.data, label: "CompareStocks")
 
         switch response.result {
         case .success(let compareData):

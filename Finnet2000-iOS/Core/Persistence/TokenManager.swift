@@ -94,9 +94,6 @@ final class TokenManager {
             kSecAttrAccessible:   kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
         ]
         let status = SecItemAdd(query as CFDictionary, nil)
-        if status != errSecSuccess {
-            debugPrint("🔑 Keychain write error (\(key)): \(status)")
-        }
         return status == errSecSuccess
     }
 
@@ -124,7 +121,6 @@ final class TokenManager {
         default: return nil
         }
         if let migrated = UserDefaults.standard.string(forKey: udKey) {
-            debugPrint("🔑 [Migration] \(udKey) UserDefaults→Keychain taşınıyor.")
             keychainWrite(key: key, value: migrated)
             UserDefaults.standard.removeObject(forKey: udKey)
             return migrated
