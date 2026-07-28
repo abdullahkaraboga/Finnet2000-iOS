@@ -11,11 +11,20 @@ struct FinancialAnalysisSection: View {
     let result: CompareStocksResponse
     let leftKey: String?
     let rightKey: String?
+    @State private var selectedIndex = 0
+    let analysisOptions = ["Analiz 1", "Analiz 2", "Analiz 3"]
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Finansal Analiz")
-                .font(.system(size: 17, weight: .bold))
+            HStack {
+                Text("Finansal Analiz")
+                    .font(.system(size: 17, weight: .bold))
+                Spacer()
+                AssetSelectionView(
+                    selectedIndex: $selectedIndex,
+                    values: analysisOptions
+                )
+            }
 
             let left = (result.keys.contains(leftKey ?? "") ? leftKey : result.keys.first) ?? ""
             let right = (result.keys.contains(rightKey ?? "") ? rightKey : result.keys.dropFirst().first) ?? ""

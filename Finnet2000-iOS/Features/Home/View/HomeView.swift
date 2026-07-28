@@ -31,14 +31,7 @@ extension CurrencyPriceGroup: Identifiable {
   public var id: String { assetType }
 }
 
-// MARK: - Colors / Theme
 
-extension Color {
-  static let midGreen = Color(red: 0.18, green: 0.72, blue: 0.40)
-  static let pink = Color(red: 1.0, green: 0.41, blue: 0.71)
-  static let red = Color(red: 0.85, green: 0.11, blue: 0.18)
-  static let surfaceContainerLowest = Color(.systemBackground)
-}
 
 // MARK: - Formatters
 
@@ -487,7 +480,7 @@ struct LineChartCardView: View {
           .padding(10)
       }
     }
-    .background(Color.surfaceContainerLowest)
+    .background(Color(.systemGray6))
     .cornerRadius(12)
     .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
   }
@@ -692,7 +685,7 @@ struct MostChangedStocksView: View {
           Divider()
         }
       }
-      .background(Color.surfaceContainerLowest)
+      .background(Color(.systemGray6))
       .cornerRadius(10)
     }
     .padding(.vertical, 28)
@@ -755,7 +748,7 @@ struct MostTransactionStocksView: View {
           Divider()
         }
       }
-      .background(Color.surfaceContainerLowest)
+      .background(Color(.systemGray6))
       .cornerRadius(10)
     }
     .padding(.vertical, 28)
@@ -820,7 +813,7 @@ struct CurrencyPriceInfoView: View {
             Divider()
           }
         }
-        .background(Color.surfaceContainerLowest)
+        .background(Color(.systemGray6))
         .cornerRadius(10)
       }
     }
@@ -864,40 +857,9 @@ struct SlidingButtonView: View {
   }
 }
 
-/// Açılır menü seçici (AssetSelectionView)
-struct AssetSelectionView: View {
-  @Binding var selectedIndex: Int
-  let values: [String]
 
-  var body: some View {
-    Menu {
-      ForEach(Array(values.enumerated()), id: \.offset) { i, val in
-        Button(val) { selectedIndex = i }
-      }
-    } label: {
-      HStack(spacing: 4) {
-        Text(values[safe: selectedIndex] ?? "")
-          .font(.system(size: 13, weight: .semibold))
-          .foregroundColor(.midGreen)
-        Image(systemName: "chevron.down")
-          .font(.system(size: 11))
-          .foregroundColor(.midGreen)
-      }
-      .padding(.horizontal, 10)
-      .padding(.vertical, 6)
-      .background(Color.midGreen.opacity(0.1))
-      .cornerRadius(8)
-    }
-  }
-}
 
-// MARK: - Safe subscript
 
-extension Array {
-  subscript(safe index: Int) -> Element? {
-    indices.contains(index) ? self[index] : nil
-  }
-}
 
 // MARK: - Preview
 
@@ -912,4 +874,5 @@ struct HomePageScreen_Previews: PreviewProvider {
 // MARK: - Backward compatibility alias
 
 typealias HomeView = HomePageScreen
+
 
