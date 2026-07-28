@@ -71,27 +71,29 @@ struct HomePageScreen: View {
           .progressViewStyle(CircularProgressViewStyle(tint: .midGreen))
           .scaleEffect(1.5)
       } else if let data = viewModel.data {
-        ScrollView {
-          VStack(spacing: 0) {
-            DarkHeaderView(contents: data.contents ?? [], liveStocks: wsManager.stocks)
-            VStack(spacing: 0) {
-              RoboSepetlerView(portfolios: data.robofundResponse ?? [])
-                .padding(.horizontal, 16)
-              LineChartView(annualGraphInfo: data.annualGraphInfo ?? [])
-                .padding(.horizontal, 16)
-              StockMarketTodayView(dailyIndexInfo: data.dailyIndexInfo ?? [])
-                .padding(.horizontal, 16)
-              if let stockStatsDetail = data.stockStatsDetail {
-                MostChangedStocksView(stockStatsDetail: stockStatsDetail)
-                  .padding(.horizontal, 16)
-                MostTransactionStocksView(stockStatsDetail: stockStatsDetail)
-                  .padding(.horizontal, 16)
-              }
-              CurrencyPriceInfoView(currencyPriceInfo: data.currencyPriceInfo ?? [])
-                .padding(.horizontal, 16)
-              Spacer().frame(height: 80)
+        ScrollViewReader { proxy in
+            ScrollView {
+                VStack(spacing: 0) {
+                    DarkHeaderView(contents: data.contents ?? [], liveStocks: wsManager.stocks)
+                    VStack(spacing: 0) {
+                        RoboSepetlerView(portfolios: data.robofundResponse ?? [])
+                            .padding(.horizontal, 16)
+                        LineChartView(annualGraphInfo: data.annualGraphInfo ?? [])
+                            .padding(.horizontal, 16)
+                        StockMarketTodayView(dailyIndexInfo: data.dailyIndexInfo ?? [])
+                            .padding(.horizontal, 16)
+                        if let stockStatsDetail = data.stockStatsDetail {
+                            MostChangedStocksView(stockStatsDetail: stockStatsDetail)
+                                .padding(.horizontal, 16)
+                            MostTransactionStocksView(stockStatsDetail: stockStatsDetail)
+                                .padding(.horizontal, 16)
+                        }
+                        CurrencyPriceInfoView(currencyPriceInfo: data.currencyPriceInfo ?? [], scrollViewProxy: proxy)
+                            .padding(.horizontal, 16)
+                        Spacer().frame(height: 80)
+                    }
+                }
             }
-          }
         }
       } else if let error = viewModel.errorMessage {
         VStack(spacing: 12) {
@@ -759,8 +761,15 @@ struct MostTransactionStocksView: View {
 // MARK: - CurrencyPriceInfo
 
 struct CurrencyPriceInfoView: View {
-  let currencyPriceInfo: [CurrencyPriceGroup]
-  @State private var selectedIndex: Int = 0
+    let currencyPriceInfo: [CurrencyPriceGroup]
+    var scrollViewProxy: ScrollViewProxy?
+    @State private var selectedIndex: Int = 0
+    private let bottomID = "CurrencyPriceInfoViewBottom"
+
+    init(currencyPriceInfo: [CurrencyPriceGroup], scrollViewProxy: ScrollViewProxy? = nil) {
+        self.currencyPriceInfo = currencyPriceInfo
+        self.scrollViewProxy = scrollViewProxy
+    }
 
   /// Döviz grubunu öne alarak sıralar
   var sortedGroups: [CurrencyPriceGroup] {
@@ -816,9 +825,17 @@ struct CurrencyPriceInfoView: View {
         .background(Color(.systemGray6))
         .cornerRadius(10)
       }
+        Color.clear.frame(height: 1, alignment: .bottom).id(bottomID)
     }
     .padding(.vertical, 28)
     .animation(.easeInOut(duration: 0.3), value: selectedIndex)
+    .onChange(of: selectedIndex) { newIndex in
+        if let proxy = scrollViewProxy {
+            withAnimation {
+                proxy.scrollTo(bottomID, anchor: .bottom)
+            }
+        }
+    }
   }
 }
 
@@ -874,5 +891,3 @@ struct HomePageScreen_Previews: PreviewProvider {
 // MARK: - Backward compatibility alias
 
 typealias HomeView = HomePageScreen
-
-
