@@ -97,7 +97,7 @@ struct StockDetailMockView: View {
                 }
                 .buttonStyle(.plain)
                 Spacer()
-                HStack(spacing: 10) {
+                HStack(spacing: 2) {
                     Button { navigateToMatriksBridge = true } label: {
                         sdNavButton("doc.text")
                     }

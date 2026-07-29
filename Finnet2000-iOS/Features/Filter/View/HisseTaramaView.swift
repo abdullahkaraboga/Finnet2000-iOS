@@ -85,7 +85,7 @@ struct StockScannerView: View {
                         } label: {
                             Text("Listelerim")
                                 .font(.system(size: 15, weight: .semibold))
-                                .foregroundColor(selectedListTab == 0 ? .black : .gray)
+                                .foregroundColor(selectedListTab == 0 ? .gray : primaryGreen)
                                 .frame(maxWidth: .infinity)
                                 .frame(height: 44)
                         }
@@ -95,22 +95,13 @@ struct StockScannerView: View {
                         } label: {
                             Text("Örnek Listeler")
                                 .font(.system(size: 15, weight: .semibold))
-                                .foregroundColor(selectedListTab == 1 ? .black : .gray)
+                                .foregroundColor(selectedListTab == 0 ? .gray : primaryGreen)
                                 .frame(maxWidth: .infinity)
                                 .frame(height: 44)
                         }
                     }
 
-                    GeometryReader { geo in
-                        ZStack(alignment: .leading) {
-                            Color.gray.opacity(0.18)
-                            Rectangle()
-                                .fill(primaryGreen)
-                                .frame(width: geo.size.width / 2, height: 2)
-                                .offset(x: selectedListTab == 0 ? 0 : geo.size.width / 2)
-                        }
-                    }
-                    .frame(height: 2)
+
                 }
                 .background(.white)
 
@@ -153,6 +144,10 @@ struct StockScannerView: View {
                 Spacer()
             }
         }
+        .navigationTitle("Hisse Filtreleme")
+        .navigationBarTitleDisplayMode(.inline)
+        .transparentNavigationBar()
+        .background(Color(.systemBackground).ignoresSafeArea())
     }
 }
 
