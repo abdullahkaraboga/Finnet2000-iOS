@@ -17,14 +17,14 @@ struct TeknikScannerRow: Identifiable {
 
 private func signalColor(_ value: String) -> Color {
     let lower = value.lowercased()
-    if lower == "al" { return Color.midGreen }
-    if lower == "sat" { return Color.red }
+    if lower == "al" { return Color.signalAl }
+    if lower == "sat" { return Color.signalSat }
     return .secondary
 }
 
 private func signalWeight(_ value: String) -> Font.Weight {
     let lower = value.lowercased()
-    if lower == "al" || lower == "sat" { return .semibold }
+    if lower == "al" || lower == "sat" { return .bold }
     return .regular
 }
 
@@ -73,38 +73,21 @@ private enum TeknikMockData {
 // MARK: - View
 
 struct TeknikTarayiciView: View {
+    @Namespace private var animation
     @Environment(\.dismiss) private var dismiss
     @State private var selectedTab: ScanTab = .al
-    @State private var hOffset: CGFloat = 0
-    @State private var hOffsetAtDragStart: CGFloat = 0
     @State private var showFilterSheet = false
 
     enum ScanTab { case al, sat }
 
-    // MARK: Layout constants
-    private let codeColW: CGFloat   = 80
-    private let signalColW: CGFloat = 110
-
     private let columns: [(header: String, keyPath: KeyPath<TeknikScannerRow, String>)] = [
-        ("ma5Signal",        \TeknikScannerRow.ma5Signal),
-        ("ma5To20Signal",    \TeknikScannerRow.ma5To20Signal),
-        ("ma20Signal",       \TeknikScannerRow.ma20Signal),
+        ("MA5 Sinyal",       \TeknikScannerRow.ma5Signal),
+        ("MA5>20 Sinyal",    \TeknikScannerRow.ma5To20Signal),
+        ("MA20 Sinyal",      \TeknikScannerRow.ma20Signal),
         ("RSI Sinyal",       \TeknikScannerRow.rsiSignal),
         ("MACD Sinyal",      \TeknikScannerRow.macdSignal),
         ("Bollinger Sinyal", \TeknikScannerRow.bollingerSignal),
     ]
-
-    private var totalScrollableWidth: CGFloat {
-        CGFloat(columns.count) * signalColW
-    }
-
-    private var visibleScrollWidth: CGFloat {
-        UIScreen.main.bounds.width - codeColW
-    }
-
-    private var maxHOffset: CGFloat {
-        max(0, totalScrollableWidth - visibleScrollWidth)
-    }
 
     private var rows: [TeknikScannerRow] {
         selectedTab == .al ? TeknikMockData.alRows : TeknikMockData.satRows
@@ -114,12 +97,17 @@ struct TeknikTarayiciView: View {
 
     var body: some View {
         ZStack(alignment: .bottom) {
-            Color(.systemGroupedBackground).ignoresSafeArea()
+            Color.appBackground.ignoresSafeArea()
 
             VStack(spacing: 0) {
                 segmentedControl
-                tableContent
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 12)
+
+                tableContainer
             }
+            .padding(.bottom, 80)
+
 
             floatingFilterButton
         }
@@ -135,139 +123,107 @@ struct TeknikTarayiciView: View {
 
     private var segmentedControl: some View {
         HStack(spacing: 0) {
-            segmentButton(tab: .al,
-                          iconName: "dollarsign",
-                          label: "AL")
-            segmentButton(tab: .sat,
-                          iconName: "arrow.down.arrow.up",
-                          label: "Sat")
+            segmentButton(tab: .al, iconName: "arrow.up.right", label: "AL")
+            segmentButton(tab: .sat, iconName: "arrow.down.right", label: "SAT")
         }
         .padding(4)
-        .background(Color.white, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .stroke(Color(.systemGray5), lineWidth: 1)
-        )
-        .padding(.horizontal, 28)
-        .padding(.vertical, 12)
+        .background(Color.secondaryBackground, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 
     private func segmentButton(tab: ScanTab, iconName: String, label: String) -> some View {
         Button {
-            withAnimation(.easeInOut(duration: 0.18)) {
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
                 selectedTab = tab
-                hOffset = 0
-                hOffsetAtDragStart = 0
             }
         } label: {
-            HStack(spacing: 6) {
+            HStack(spacing: 8) {
                 Image(systemName: iconName)
                     .font(.system(size: 14, weight: .semibold))
                 Text(label)
-                    .font(.system(size: 15, weight: .semibold))
+                    .font(.system(size: 15, weight: .bold))
             }
             .foregroundColor(selectedTab == tab ? .primary : .secondary)
             .frame(maxWidth: .infinity)
             .padding(.vertical, 10)
-            .background(
-                selectedTab == tab
-                    ? RoundedRectangle(cornerRadius: 9, style: .continuous).fill(Color.midGreen.opacity(0.35))
-                    : nil
-            )
+            .background {
+                if selectedTab == tab {
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(Color.primaryBackground)
+                        .shadow(color: .black.opacity(0.1), radius: 3, y: 2)
+                        .matchedGeometryEffect(id: "segment-bg", in: animation)
+                }
+            }
         }
         .buttonStyle(.plain)
     }
 
     // MARK: - Table
 
-    private var tableContent: some View {
-        ScrollView(.vertical, showsIndicators: false) {
-            LazyVStack(spacing: 0, pinnedViews: [.sectionHeaders]) {
-                Section {
+    private var tableContainer: some View {
+        VStack(spacing: 0) {
+            tableHeader
+            Divider()
+            ScrollView(.vertical, showsIndicators: false) {
+                LazyVStack(spacing: 0) {
                     ForEach(Array(rows.enumerated()), id: \.element.id) { idx, row in
-                        tableRow(row, idx: idx)
+                        tableRow(row, isEven: idx % 2 == 0)
                         Divider()
                     }
-                } header: {
-                    tableHeader
                 }
             }
         }
-        .simultaneousGesture(
-            DragGesture(minimumDistance: 5)
-                .onChanged { value in
-                    guard abs(value.translation.width) > abs(value.translation.height) else { return }
-                    let proposed = hOffsetAtDragStart - value.translation.width
-                    hOffset = max(0, min(proposed, maxHOffset))
-                }
-                .onEnded { _ in
-                    hOffsetAtDragStart = hOffset
-                }
+        .background(Color.primaryBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .stroke(Color.secondary.opacity(0.2), lineWidth: 1)
         )
-        .padding(.bottom, 80)
+        .padding(.horizontal, 20)
     }
 
     private var tableHeader: some View {
         HStack(spacing: 0) {
-            // Fixed code column header
-            HStack(spacing: 3) {
-                Text("code")
-                    .font(.system(size: 13, weight: .bold))
-                    .foregroundColor(.primary)
-            }
-            .frame(width: codeColW - 12, alignment: .leading)
-            .padding(.leading, 12)
-            .frame(width: codeColW)
+            Text("Kod")
+                .font(.system(size: 14, weight: .semibold))
+                .frame(width: 80, alignment: .leading)
+                .padding(.leading, 16)
 
-            // Scrollable signal column headers
-            HStack(spacing: 0) {
-                ForEach(columns.indices, id: \.self) { i in
-                    Text(columns[i].header)
-                        .font(.system(size: 14, weight: .bold))
-                        .foregroundColor(.primary)
-                        .multilineTextAlignment(.leading)
-                        .lineLimit(2)
-                        .minimumScaleFactor(0.8)
-                        .frame(width: signalColW, alignment: .leading)
-                        .padding(.leading, 4)
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 0) {
+                    ForEach(columns.indices, id: \.self) { i in
+                        Text(columns[i].header)
+                            .font(.system(size: 14, weight: .semibold))
+                            .frame(width: 120, alignment: .leading)
+                            .lineLimit(2)
+                    }
                 }
             }
-            .offset(x: -hOffset)
-            .frame(width: visibleScrollWidth, alignment: .leading)
-            .clipped()
         }
+        .foregroundColor(.secondary)
         .padding(.vertical, 12)
-        .background(Color.white)
-        .overlay(alignment: .bottom) { Divider() }
     }
 
-    private func tableRow(_ row: TeknikScannerRow, idx: Int) -> some View {
+    private func tableRow(_ row: TeknikScannerRow, isEven: Bool) -> some View {
         HStack(spacing: 0) {
-            // Fixed code column
             Text(row.code)
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundColor(.primary)
-                .frame(width: codeColW - 12, alignment: .leading)
-                .padding(.leading, 12)
-                .frame(width: codeColW)
+                .font(.system(size: 14, weight: .semibold))
+                .frame(width: 80, alignment: .leading)
+                .padding(.leading, 16)
 
-            // Scrollable signal columns
-            HStack(spacing: 0) {
-                ForEach(columns.indices, id: \.self) { i in
-                    let value = row[keyPath: columns[i].keyPath]
-                    Text(value)
-                        .font(.system(size: 13, weight: signalWeight(value)))
-                        .foregroundColor(signalColor(value))
-                        .frame(width: signalColW, alignment: .leading)
-                        .padding(.leading, 4)
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 0) {
+                    ForEach(columns.indices, id: \.self) { i in
+                        let value = row[keyPath: columns[i].keyPath]
+                        Text(value)
+                            .font(.system(size: 14, weight: signalWeight(value)))
+                            .foregroundColor(signalColor(value))
+                            .frame(width: 120, alignment: .leading)
+                    }
                 }
             }
-            .offset(x: -hOffset)
-            .frame(width: visibleScrollWidth, alignment: .leading)
-            .clipped()
         }
-        .padding(.vertical, 14)
-        .background(idx % 2 == 1 ? Color(.systemGray6).opacity(0.38) : Color.white)
+        .padding(.vertical, 16)
+        .background(isEven ? Color.primaryBackground : Color.secondaryBackground.opacity(0.4))
     }
 
     // MARK: - Floating Filter Button
@@ -277,7 +233,7 @@ struct TeknikTarayiciView: View {
             showFilterSheet = true
         } label: {
             HStack(spacing: 10) {
-                Image(systemName: "arrow.up.arrow.down.square")
+                Image(systemName: "line.3.horizontal.decrease.circle")
                     .font(.system(size: 17, weight: .semibold))
                 Text("Endeks/Sektör Filtrele")
                     .font(.system(size: 15, weight: .semibold))
@@ -285,17 +241,18 @@ struct TeknikTarayiciView: View {
             .foregroundColor(.primary)
             .padding(.horizontal, 24)
             .padding(.vertical, 14)
-            .background(Color(.systemBackground))
+            .background(Color.primaryBackground)
             .clipShape(Capsule())
-            .overlay(Capsule().stroke(Color.midGreen, lineWidth: 1.5))
-            .shadow(color: .black.opacity(0.12), radius: 8, x: 0, y: 4)
+            .overlay(Capsule().stroke(Color.secondary.opacity(0.2), lineWidth: 1))
+            .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: 4)
         }
         .buttonStyle(.plain)
         .padding(.bottom, 24)
     }
 }
 
-// MARK: - Filter Sheet
+
+// MARK: - Filter Sheet (Unchanged but included for completeness)
 
 private struct TeknikFilterSheet: View {
     @Environment(\.dismiss) private var dismiss
@@ -327,21 +284,21 @@ private struct TeknikFilterSheet: View {
         VStack(spacing: 0) {
             // Header
             HStack {
-                Text("Tarayıcı")
-                    .font(.system(size: 26, weight: .bold))
+                Text("Tarayıcıyı Filtrele")
+                    .font(.system(size: 24, weight: .bold))
                 Spacer()
                 Button { dismiss() } label: {
                     Image(systemName: "xmark")
                         .font(.system(size: 15, weight: .medium))
                         .foregroundColor(.primary)
                         .frame(width: 34, height: 34)
-                        .background(Color(.systemGray5), in: Circle())
+                        .background(Color.secondaryBackground, in: Circle())
                 }
                 .buttonStyle(.plain)
             }
             .padding(.horizontal, 20)
             .padding(.top, 24)
-            .padding(.bottom, 4)
+            .padding(.bottom, 12)
 
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 0) {
@@ -375,19 +332,20 @@ private struct TeknikFilterSheet: View {
 
             // Kaydet button
             Button { dismiss() } label: {
-                Text("Kaydet")
+                Text("Filtreyi Uygula")
                     .font(.system(size: 17, weight: .semibold))
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 18)
                     .background(Color.midGreen)
-                    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
             }
             .buttonStyle(.plain)
             .padding(.horizontal, 20)
             .padding(.vertical, 16)
+            .shadow(color: Color.midGreen.opacity(0.4), radius: 8, y: 4)
         }
-        .background(Color(.systemBackground))
+        .background(Color.primaryBackground)
     }
 
     @ViewBuilder
@@ -407,13 +365,13 @@ private struct TeknikFilterSheet: View {
                     isExpanded.wrappedValue.toggle()
                 }
             } label: {
-                HStack(spacing: 10) {
-                    Image(systemName: "chevron.up")
+                HStack(spacing: 12) {
+                    Text(title)
+                        .font(.system(size: 18, weight: .semibold))
+                    Spacer()
+                    Image(systemName: "chevron.down")
                         .font(.system(size: 14, weight: .semibold))
                         .rotationEffect(.degrees(isExpanded.wrappedValue ? 0 : -180))
-                    Text(title)
-                        .font(.system(size: 17, weight: .semibold))
-                    Spacer()
                 }
                 .foregroundColor(.primary)
                 .padding(.horizontal, 20)
@@ -439,6 +397,10 @@ private struct TeknikFilterSheet: View {
                     pageDotsView(total: totalDots, current: currentPage.wrappedValue)
                         .padding(.bottom, 16)
                 }
+                .transition(.asymmetric(
+                    insertion: .opacity.combined(with: .scale(scale: 0.95, anchor: .top)),
+                    removal: .opacity
+                ))
             }
         }
     }
@@ -479,19 +441,17 @@ private struct TeknikFilterSheet: View {
             let isSelected = selectedItems.contains(item)
             Text(item)
                 .font(.system(size: 13, weight: .medium))
-                .foregroundColor(.primary)
+                .foregroundColor(isSelected ? .white : .primary)
                 .lineLimit(1)
-                .padding(.horizontal, 14)
+                .padding(.horizontal, 16)
                 .padding(.vertical, 12)
-                .frame(minHeight: 42)
-                .background(Color(.systemBackground))
-                .clipShape(Capsule())
-                .overlay(
-                    Capsule().stroke(
-                        isSelected ? Color.midGreen : Color(.systemGray4),
-                        lineWidth: isSelected ? 1.5 : 1
-                    )
-                )
+                .background {
+                    if isSelected {
+                        Capsule().fill(Color.midGreen)
+                    } else {
+                        Capsule().fill(Color.secondaryBackground)
+                    }
+                }
         }
         .buttonStyle(.plain)
     }
@@ -499,23 +459,36 @@ private struct TeknikFilterSheet: View {
     private func chipGridHeight(itemCount: Int, itemsPerRow: Int) -> CGFloat {
         guard itemCount > 0 else { return 44 }
         let rows = Int(ceil(Double(itemCount) / Double(itemsPerRow)))
-        let chipH: CGFloat = 42
+        let chipH: CGFloat = 44
         let spacing: CGFloat = 10
         return CGFloat(rows) * chipH + CGFloat(max(0, rows - 1)) * spacing + 6
     }
 
     private func pageDotsView(total: Int, current: Int) -> some View {
-        HStack(spacing: 6) {
+        HStack(spacing: 8) {
             ForEach(0..<total, id: \.self) { i in
-                Capsule()
-                    .fill(i == current ? Color.midGreen : Color(.systemGray4))
-                    .frame(width: i == current ? 22 : 8, height: 8)
+                Circle()
+                    .fill(i == current ? Color.midGreen : Color.secondaryBackground)
+                    .frame(width: 8, height: 8)
+                    .scaleEffect(i == current ? 1.2 : 1.0)
             }
         }
+        .animation(.spring(response: 0.3, dampingFraction: 0.7), value: current)
         .padding(.horizontal, 20)
     }
 }
 
+
 #Preview {
-    TeknikTarayiciView()
+    NavigationView {
+        TeknikTarayiciView()
+    }
+    .preferredColorScheme(.dark)
+}
+
+#Preview {
+    NavigationView {
+        TeknikTarayiciView()
+    }
+    .preferredColorScheme(.light)
 }

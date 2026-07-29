@@ -10,6 +10,7 @@ struct PortfolioDetailView: View {
     var onBack: (() -> Void)? = nil
     @Environment(\.dismiss) private var dismiss
 
+
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
@@ -62,6 +63,14 @@ struct PortfolioDetailView: View {
     }
 }
 
+private extension Color {
+    static let sdGreen      = Color(red: 0.18, green: 0.72, blue: 0.40)
+    static let sdRed        = Color(red: 0.85, green: 0.11, blue: 0.18)
+    static let sdBlue       = Color(red: 0.11, green: 0.39, blue: 0.78)
+    static let sdPink       = Color(red: 1.00, green: 0.38, blue: 0.58)
+    static let sdChartGreen = Color(red: 0.30, green: 0.79, blue: 0.49)
+}
+
 // MARK: - Navigation Bar
 
 private struct PDNavBar: View {
@@ -69,6 +78,7 @@ private struct PDNavBar: View {
     var onBack: (() -> Void)?
     var onEdit: (() -> Void)?
     var onDelete: (() -> Void)?
+
 
     @State private var showDeleteAlert = false
 
@@ -82,9 +92,9 @@ private struct PDNavBar: View {
                 Button { onBack?() } label: {
                     Image(systemName: "chevron.left")
                         .font(.system(size: 17, weight: .semibold))
-                        .foregroundColor(.white)
+                        .foregroundStyle(.primary)
                         .frame(width: 40, height: 40)
-                        .background(Color.white.opacity(0.15),
+                        .background(.thinMaterial,
                                     in: RoundedRectangle(cornerRadius: 12, style: .continuous))
                 }
                 .buttonStyle(.plain)
@@ -116,10 +126,10 @@ private struct PDNavBar: View {
                 VStack(alignment: .leading, spacing: 3) {
                     Text(detail.name)
                         .font(.system(size: 17, weight: .bold))
-                        .foregroundColor(.white)
+                        .foregroundStyle(.primary)
                     Text(detail.date)
                         .font(.system(size: 11))
-                        .foregroundColor(.white.opacity(0.5))
+                        .foregroundStyle(.secondary)
                 }
 
                 Spacer()
@@ -127,10 +137,10 @@ private struct PDNavBar: View {
                 VStack(alignment: .trailing, spacing: 3) {
                     Text(detail.totalValueFormatted)
                         .font(.system(size: 16, weight: .bold))
-                        .foregroundColor(.white)
+                        .foregroundStyle(.primary)
                     Text(detail.date)
                         .font(.system(size: 10))
-                        .foregroundColor(.white.opacity(0.4))
+                        .foregroundStyle(.tertiary)
                     Text(String(format: "%%%.2f", detail.dailyReturn))
                         .font(.system(size: 12, weight: .semibold))
                         .foregroundColor(returnColor)
@@ -140,7 +150,7 @@ private struct PDNavBar: View {
             .padding(.top, 4)
             .padding(.bottom, 16)
         }
-        .background(Color.black)
+        .background(.regularMaterial)
         .frame(maxWidth: .infinity)
         .alert("Portföyü Sil", isPresented: $showDeleteAlert) {
             Button("İptal", role: .cancel) {}
@@ -151,11 +161,12 @@ private struct PDNavBar: View {
     }
 
     private func pdNavButton(_ systemName: String) -> some View {
+        
         Image(systemName: systemName)
             .font(.system(size: 16, weight: .semibold))
-            .foregroundColor(.white)
+            .foregroundStyle(.primary)
             .frame(width: 40, height: 40)
-            .background(Color.white.opacity(0.15),
+            .background(.thinMaterial,
                         in: RoundedRectangle(cornerRadius: 12, style: .continuous))
     }
 }

@@ -34,7 +34,7 @@ struct StockSearchView: View {
     private var searchBar: some View {
         HStack {
             Image(systemName: "magnifyingglass")
-                .foregroundColor(.gray)
+                .foregroundColor(.secondary)
             TextField("Hisse Kodu Ara", text: $searchText)
                 .textFieldStyle(PlainTextFieldStyle())
         }
@@ -65,7 +65,7 @@ fileprivate struct StockRow: View {
             Button(action: onAdd) {
                 Image(systemName: "plus.circle.fill")
                     .font(.title2)
-                    .foregroundColor(.blue)
+                    .foregroundColor(.accentColor)
             }
         }
         .padding(.horizontal)

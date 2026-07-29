@@ -5,21 +5,13 @@ struct StockScannerView: View {
     @State private var selectedTab = 0
     @State private var selectedListTab = 0
 
-    private let primaryGreen = Color(
-        red: 0.17,
-        green: 0.76,
-        blue: 0.49
-    )
+    private let primaryGreen = ColorConstants.finnetGreen
 
     var body: some View {
 
         ZStack {
 
-            Color(
-                red: 0.95,
-                green: 0.95,
-                blue: 0.95
-            )
+            Color(.systemBackground)
             .ignoresSafeArea()
 
             VStack(spacing: 0) {
@@ -36,7 +28,7 @@ struct StockScannerView: View {
 
                             Text("Listeler")
                                 .font(.system(size: 17, weight: .semibold))
-                                .foregroundColor(.black)
+                                .foregroundColor(.primary)
                                 .frame(maxWidth: .infinity)
                                 .frame(height: 48)
                         }
@@ -47,7 +39,7 @@ struct StockScannerView: View {
 
                             Text("Tarayıcı")
                                 .font(.system(size: 17, weight: .semibold))
-                                .foregroundColor(.black)
+                                .foregroundColor(.primary)
                                 .frame(maxWidth: .infinity)
                                 .frame(height: 48)
                         }
@@ -74,7 +66,7 @@ struct StockScannerView: View {
                     }
                     .frame(height: 2)
                 }
-                .background(.white)
+                .background(Color(.secondarySystemBackground))
 
                 // ALT TABLAR
 
@@ -85,7 +77,7 @@ struct StockScannerView: View {
                         } label: {
                             Text("Listelerim")
                                 .font(.system(size: 15, weight: .semibold))
-                                .foregroundColor(selectedListTab == 0 ? .gray : primaryGreen)
+                                .foregroundColor(selectedListTab == 0 ? primaryGreen : .secondary)
                                 .frame(maxWidth: .infinity)
                                 .frame(height: 44)
                         }
@@ -95,16 +87,13 @@ struct StockScannerView: View {
                         } label: {
                             Text("Örnek Listeler")
                                 .font(.system(size: 15, weight: .semibold))
-                                .foregroundColor(selectedListTab == 0 ? .gray : primaryGreen)
+                                .foregroundColor(selectedListTab == 1 ? primaryGreen : .secondary)
                                 .frame(maxWidth: .infinity)
                                 .frame(height: 44)
                         }
                     }
-
-
                 }
-                .background(.white)
-
+                .background(Color(.secondarySystemBackground))
                 // CONTENT
 
                 VStack {
@@ -125,9 +114,9 @@ struct StockScannerView: View {
                             Text("Yeni Liste Oluştur")
                                 .font(.system(size: 16))
                         }
-                        .foregroundColor(.black)
+                        .foregroundColor(.primary)
                         .frame(width: 200, height: 40)
-                        .background(.white)
+                        .background(Color(.systemBackground))
                         .overlay(
                             RoundedRectangle(cornerRadius: 10)
                                 .stroke(
