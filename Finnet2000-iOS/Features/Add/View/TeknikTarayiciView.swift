@@ -117,55 +117,18 @@ struct TeknikTarayiciView: View {
             Color(.systemGroupedBackground).ignoresSafeArea()
 
             VStack(spacing: 0) {
-                navBar
                 segmentedControl
                 tableContent
             }
 
             floatingFilterButton
         }
-        .navigationBarHidden(true)
+        .navigationTitle("Teknik Tarayıcı")
+        .navigationBarTitleDisplayMode(.inline)
+        .transparentNavigationBar()
         .sheet(isPresented: $showFilterSheet) {
             TeknikFilterSheet()
         }
-    }
-
-    // MARK: - Navigation Bar
-
-    private var navBar: some View {
-        HStack {
-            Button { dismiss() } label: {
-                Image(systemName: "chevron.left")
-                    .font(.system(size: 17, weight: .semibold))
-                    .foregroundColor(.white)
-                    .frame(width: 40, height: 40)
-            }
-            .buttonStyle(.plain)
-
-            Spacer()
-
-            Text("Teknik Tarayıcı")
-                .font(.system(size: 18, weight: .semibold))
-                .foregroundColor(.white)
-
-            Spacer()
-
-            Button {} label: {
-                ZStack {
-                    Circle()
-                        .fill(Color.white)
-                        .frame(width: 40, height: 40)
-                    Image(systemName: "info")
-                        .font(.system(size: 17, weight: .bold))
-                        .foregroundColor(.black)
-                }
-                .frame(width: 40, height: 40)
-            }
-            .buttonStyle(.plain)
-        }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 10)
-        .background(Color.black.ignoresSafeArea(edges: .top))
     }
 
     // MARK: - Segmented Control

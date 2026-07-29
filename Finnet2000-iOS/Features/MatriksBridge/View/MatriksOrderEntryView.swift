@@ -83,10 +83,6 @@ struct MatriksOrderEntryView: View {
 
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 0) {
-                    topBar
-                        .padding(.horizontal, 16)
-                        .padding(.top, 8)
-
                     stockHeader
                         .padding(.horizontal, 16)
                         .padding(.top, 18)
@@ -129,7 +125,6 @@ struct MatriksOrderEntryView: View {
                     .zIndex(1)
             }
         }
-        .navigationBarHidden(true)
         .safeAreaInset(edge: .bottom) {
             Group {
                 if showResultPopup {
@@ -162,33 +157,15 @@ struct MatriksOrderEntryView: View {
         .navigationDestination(isPresented: $navigateToPortfolio) {
             PortfolioView()
         }
-    }
-
-    private var topBar: some View {
-        HStack {
-            Button(action: { dismiss() }) {
-                Image(systemName: "chevron.left")
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundStyle(Color(red: 0.10, green: 0.12, blue: 0.18))
-                    .frame(width: 40, height: 40)
+        .navigationTitle("Alış/Satış")
+        .navigationBarTitleDisplayMode(.inline)
+        .transparentNavigationBar()
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button(action: {}) {
+                    Image(systemName: "info.circle")
+                }
             }
-            .buttonStyle(.plain)
-
-            Spacer()
-
-            Text("Alış/Satış")
-                .font(.system(size: 20, weight: .bold))
-                .foregroundStyle(Color(red: 0.10, green: 0.12, blue: 0.18))
-
-            Spacer()
-
-            Button(action: {}) {
-                Image(systemName: "info.circle")
-                    .font(.system(size: 20, weight: .regular))
-                    .foregroundStyle(Color(red: 0.10, green: 0.12, blue: 0.18))
-                    .frame(width: 40, height: 40)
-            }
-            .buttonStyle(.plain)
         }
     }
 

@@ -44,14 +44,6 @@ struct CompareView: View {
                                 .padding(.vertical, 20)
                         }
 
-                        // 🔹 Hangi Fonlarda Var?
-                        if let result = viewModel.compareResult {
-                            FundsBarChartSection(result: result,
-                                                 leftKey: viewModel.selectedCode1,
-                                                 rightKey: viewModel.selectedCode2)
-                                .padding(.horizontal, 16)
-                                .padding(.vertical, 20)
-                        }
 
                         // 🔹 Finansal Tablolar
                         if let result = viewModel.compareResult {
@@ -63,6 +55,15 @@ struct CompareView: View {
                         // 🔹 Finansal Analiz
                         if let result = viewModel.compareResult {
                             FinancialAnalysisSection(result: result, leftKey: viewModel.selectedCode1, rightKey: viewModel.selectedCode2)
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 20)
+                        }
+                        
+                        // 🔹 Hangi Fonlarda Var?
+                        if let result = viewModel.compareResult {
+                            FundsBarChartSection(result: result,
+                                                 leftKey: viewModel.selectedCode1,
+                                                 rightKey: viewModel.selectedCode2)
                                 .padding(.horizontal, 16)
                                 .padding(.vertical, 20)
                         }

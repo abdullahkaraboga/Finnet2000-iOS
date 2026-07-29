@@ -66,8 +66,6 @@ struct PortfolioView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            navBar
-
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 0) {
                     headerSection
@@ -88,33 +86,10 @@ struct PortfolioView: View {
             }
             .background(Color.white)
         }
-        .navigationBarHidden(true)
         .background(Color.white)
-    }
-
-    // MARK: Nav bar
-
-    private var navBar: some View {
-        ZStack {
-            Color.black
-            HStack {
-                Button(action: { dismiss() }) {
-                    Image(systemName: "arrow.left")
-                        .font(.system(size: 17, weight: .semibold))
-                        .foregroundStyle(.white)
-                        .frame(width: 44, height: 44, alignment: .leading)
-                }
-                .buttonStyle(.plain)
-                Spacer()
-                Text("Portföyüm")
-                    .font(.system(size: 18, weight: .bold))
-                    .foregroundStyle(.white)
-                Spacer()
-                Color.clear.frame(width: 44, height: 44)
-            }
-            .padding(.horizontal, 16)
-        }
-        .frame(height: 56)
+        .navigationTitle("Portföyüm")
+        .navigationBarTitleDisplayMode(.inline)
+        .transparentNavigationBar()
     }
 
     // MARK: Header

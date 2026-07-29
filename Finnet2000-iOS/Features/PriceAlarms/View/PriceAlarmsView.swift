@@ -20,50 +20,13 @@ struct PriceAlarmsView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            navBar
             tabBar
             tabContent
         }
         .background(Color(.systemGroupedBackground).ignoresSafeArea())
-        .navigationBarHidden(true)
-    }
-
-    // MARK: - Navigation Bar
-
-    private var navBar: some View {
-        HStack {
-            Button(action: { dismiss() }) {
-                Image(systemName: "chevron.left")
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundColor(.white)
-                    .frame(width: 40, height: 40)
-                    .background(Color.white.opacity(0.15),
-                                in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-            }
-            .buttonStyle(.plain)
-
-            Spacer()
-
-            Text("Fiyat Alarmları")
-                .font(.system(size: 17, weight: .semibold))
-                .foregroundColor(.white)
-
-            Spacer()
-
-            Button(action: {}) {
-                Image(systemName: "info.circle.fill")
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundColor(.white)
-                    .frame(width: 40, height: 40)
-                    .background(Color.white.opacity(0.15),
-                                in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-            }
-            .buttonStyle(.plain)
-        }
-        .padding(.horizontal, 16)
-        .padding(.top, 10)
-        .padding(.bottom, 12)
-        .background(Color.black)
+        .navigationTitle("Fiyat Alarmları")
+        .navigationBarTitleDisplayMode(.inline)
+        .transparentNavigationBar()
     }
 
     // MARK: - Tab Bar

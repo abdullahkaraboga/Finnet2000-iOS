@@ -12,20 +12,6 @@ struct RegisterStep2View: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 0) {
-
-                // MARK: - Navigation bar area
-                HStack {
-                    Button(action: { dismiss() }) {
-                        Image(systemName: "chevron.left")
-                            .font(.system(size: 18, weight: .medium))
-                            .foregroundColor(.primary)
-                    }
-                    Spacer()
-                }
-                .padding(.horizontal, 20)
-                .padding(.top, 12)
-                .padding(.bottom, 8)
-
                 // MARK: - Logo
                 Image("finnet2000_logo_light")
                     .resizable()
@@ -132,7 +118,9 @@ struct RegisterStep2View: View {
             }
         }
         .background(Color(UIColor.systemGroupedBackground).ignoresSafeArea())
-        .navigationBarHidden(true)
+        .navigationTitle("Kayıt Ol")
+        .navigationBarTitleDisplayMode(.inline)
+        .transparentNavigationBar()
     }
 
     // MARK: - Helpers

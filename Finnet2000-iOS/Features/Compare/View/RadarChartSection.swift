@@ -12,9 +12,6 @@ struct RadarChartSection: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Risk Radar Grafiği")
-                .font(.system(size: 17, weight: .bold))
-
             if buildCategories().isEmpty {
                 Text("Risk parametreleri bulunamadı.")
                     .font(.footnote)
@@ -25,7 +22,7 @@ struct RadarChartSection: View {
                     series: buildSeries(),
                     gridLineCount: 5
                 )
-                .frame(height: 300)
+                .frame(height: 220)
 
                 // Legend
                 HStack(spacing: 16) {

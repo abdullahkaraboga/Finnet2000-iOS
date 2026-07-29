@@ -50,8 +50,6 @@ struct AccountSummaryView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            navBar
-
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 16) {
                     accountCard
@@ -64,37 +62,10 @@ struct AccountSummaryView: View {
             }
             .background(Color(UIColor.systemGroupedBackground))
         }
-        .navigationBarHidden(true)
         .background(Color(UIColor.systemGroupedBackground))
-    }
-
-    // MARK: - Nav bar
-
-    private var navBar: some View {
-        ZStack {
-            Color.white
-            HStack {
-                Button(action: { dismiss() }) {
-                    Image(systemName: "chevron.left")
-                        .font(.system(size: 17, weight: .semibold))
-                        .foregroundStyle(.black)
-                        .frame(width: 44, height: 44, alignment: .leading)
-                }
-                .buttonStyle(.plain)
-
-                Spacer()
-
-                Text("Hesap Özeti")
-                    .font(.system(size: 18, weight: .bold))
-                    .foregroundStyle(.black)
-
-                Spacer()
-
-                Color.clear.frame(width: 44, height: 44)
-            }
-            .padding(.horizontal, 16)
-        }
-        .frame(height: 56)
+        .navigationTitle("Hesap Özeti")
+        .navigationBarTitleDisplayMode(.inline)
+        .transparentNavigationBar()
     }
 
     // MARK: - Account card

@@ -22,44 +22,42 @@ struct AccountInfoView: View {
     enum Gender { case female, male }
 
     var body: some View {
-        VStack(spacing: 0) {
-            navBar
+        ScrollView {
+            VStack(spacing: 12) {
+                readOnlyField(text: firstName)
+                readOnlyField(text: lastName)
 
-            ScrollView {
-                VStack(spacing: 12) {
-                    readOnlyField(text: firstName)
-                    readOnlyField(text: lastName)
+                editableField(
+                    placeholder: "Telefon Numarası",
+                    text: $phoneNumber,
+                    keyboardType: .phonePad
+                )
 
-                    editableField(
-                        placeholder: "Telefon Numarası",
-                        text: $phoneNumber,
-                        keyboardType: .phonePad
-                    )
+                editableField(
+                    placeholder: "TC Kimlik No",
+                    text: $tcKimlikNo,
+                    keyboardType: .numberPad
+                )
 
-                    editableField(
-                        placeholder: "TC Kimlik No",
-                        text: $tcKimlikNo,
-                        keyboardType: .numberPad
-                    )
+                dateField
 
-                    dateField
+                genderSelector
 
-                    genderSelector
+                emailCheckbox
 
-                    emailCheckbox
+                saveButton
+                    .padding(.top, 8)
 
-                    saveButton
-                        .padding(.top, 8)
-
-                    deleteButton
-                }
-                .padding(.horizontal, 20)
-                .padding(.top, 20)
-                .padding(.bottom, 40)
+                deleteButton
             }
+            .padding(.horizontal, 20)
+            .padding(.top, 20)
+            .padding(.bottom, 40)
         }
         .background(Color(.systemGroupedBackground).ignoresSafeArea())
-        .navigationBarHidden(true)
+        .navigationTitle("Hesap Bilgileri")
+        .navigationBarTitleDisplayMode(.inline)
+        .transparentNavigationBar()
         .sheet(isPresented: $showDateSheet) {
             datePickerSheet
         }
@@ -69,44 +67,6 @@ struct AccountInfoView: View {
         } message: {
             Text("Hesabınızı silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.")
         }
-    }
-
-    // MARK: - Navigation Bar
-
-    private var navBar: some View {
-        HStack {
-            Button(action: { dismiss() }) {
-                Image(systemName: "chevron.left")
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundColor(.white)
-                    .frame(width: 40, height: 40)
-                    .background(Color.white.opacity(0.15),
-                                in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-            }
-            .buttonStyle(.plain)
-
-            Spacer()
-
-            Text("Hesap Bilgileri")
-                .font(.system(size: 17, weight: .semibold))
-                .foregroundColor(.white)
-
-            Spacer()
-
-            Button(action: {}) {
-                Image(systemName: "info.circle.fill")
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundColor(.white)
-                    .frame(width: 40, height: 40)
-                    .background(Color.white.opacity(0.15),
-                                in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-            }
-            .buttonStyle(.plain)
-        }
-        .padding(.horizontal, 16)
-        .padding(.top, 10)
-        .padding(.bottom, 12)
-        .background(Color.black)
     }
 
     // MARK: - Read-Only Field

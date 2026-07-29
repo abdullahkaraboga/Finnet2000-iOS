@@ -51,24 +51,10 @@ struct MatriksBridgeView: View {
     ]
 
     var body: some View {
-        GeometryReader { geometry in
+        ZStack {
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 0) {
-                    // Back button
-                    HStack {
-                        Button(action: { dismiss() }) {
-                            Image(systemName: "chevron.left")
-                                .font(.system(size: 18, weight: .medium))
-                                .foregroundStyle(Color(.label))
-                                .frame(width: 44, height: 44, alignment: .leading)
-                        }
-                        .buttonStyle(.plain)
-                        Spacer()
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.top, geometry.safeAreaInsets.top + 4)
-
-                    Spacer(minLength: geometry.size.height * 0.13)
+                    Spacer(minLength: 44)
 
                     // Logo + subtitle
                     VStack(spacing: 10) {
@@ -183,9 +169,8 @@ struct MatriksBridgeView: View {
                     .padding(.horizontal, 20)
                     .padding(.top, 18)
 
-                    Spacer(minLength: max(geometry.safeAreaInsets.bottom, 16) + 16)
+                    Spacer()
                 }
-                .frame(minHeight: geometry.size.height)
             }
             .background(Color(UIColor.systemGroupedBackground))
             .ignoresSafeArea()
@@ -203,7 +188,6 @@ struct MatriksBridgeView: View {
                 .zIndex(1)
             }
         }
-        .navigationBarHidden(true)
         .navigationDestination(isPresented: $navigateToTradeMenu) {
             TradeMenuView()
         }
@@ -219,6 +203,9 @@ struct MatriksBridgeView: View {
                 balanceText: "681.48 ₺"
             )
         }
+        .navigationTitle("Matriks")
+        .navigationBarTitleDisplayMode(.inline)
+        .transparentNavigationBar()
     }
 
     private var matriksLogo: some View {

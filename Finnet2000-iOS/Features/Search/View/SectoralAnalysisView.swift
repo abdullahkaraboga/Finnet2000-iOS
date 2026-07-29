@@ -124,7 +124,6 @@ struct SectoralAnalysisView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            navBar
             tabBar
 
             if selectedTab == .genelBakis {
@@ -133,42 +132,10 @@ struct SectoralAnalysisView: View {
                 sektorelAnalizTab
             }
         }
-        .navigationBarHidden(true)
-    }
-
-    // MARK: - Nav Bar
-
-    private var navBar: some View {
-        HStack {
-            Button { dismiss() } label: {
-                Image(systemName: "chevron.left")
-                    .font(.system(size: 17, weight: .semibold))
-                    .foregroundColor(.white)
-                    .frame(width: 40, height: 40)
-            }
-            .buttonStyle(.plain)
-
-            Spacer()
-
-            Text("Sektörel Analiz")
-                .font(.system(size: 17, weight: .bold))
-                .foregroundColor(.white)
-
-            Spacer()
-
-            Button {} label: {
-                Image(systemName: "info.circle")
-                    .font(.system(size: 17))
-                    .foregroundColor(.white)
-                    .frame(width: 40, height: 40)
-            }
-            .buttonStyle(.plain)
-        }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 10)
-        .background {
-            Color.black.ignoresSafeArea(edges: .top)
-        }
+        .navigationTitle("Sektörel Analiz")
+        .navigationBarTitleDisplayMode(.inline)
+        .transparentNavigationBar()
+        .background(Color(.systemBackground).ignoresSafeArea())
     }
 
     // MARK: - Tab Bar

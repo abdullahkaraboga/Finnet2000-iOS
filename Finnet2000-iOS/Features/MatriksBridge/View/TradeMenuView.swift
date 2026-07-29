@@ -9,8 +9,6 @@ struct TradeMenuView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            navBar
-
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 0) {
                     traderCard
@@ -26,7 +24,6 @@ struct TradeMenuView: View {
             }
             .background(Color(UIColor.systemGroupedBackground))
         }
-        .navigationBarHidden(true)
         .navigationDestination(isPresented: $navigateToAccountSummary) {
             AccountSummaryView()
         }
@@ -34,35 +31,9 @@ struct TradeMenuView: View {
             PortfolioView()
         }
         .background(Color(UIColor.systemGroupedBackground))
-    }
-
-    // MARK: - Navigation bar
-
-    private var navBar: some View {
-        ZStack {
-            Color.white.ignoresSafeArea(edges: .top)
-            HStack {
-                Button(action: { dismiss() }) {
-                    Image(systemName: "arrow.left")
-                        .font(.system(size: 17, weight: .semibold))
-                        .foregroundStyle(.black)
-                        .frame(width: 44, height: 44, alignment: .leading)
-                }
-                .buttonStyle(.plain)
-
-                Spacer()
-
-                Text("Trade Menu")
-                    .font(.system(size: 18, weight: .bold))
-                    .foregroundStyle(.black)
-
-                Spacer()
-
-                Color.clear.frame(width: 44, height: 44)
-            }
-            .padding(.horizontal, 16)
-        }
-        .frame(height: 56)
+        .navigationTitle("Trade Menu")
+        .navigationBarTitleDisplayMode(.inline)
+        .transparentNavigationBar()
     }
 
     // MARK: - Trader header card

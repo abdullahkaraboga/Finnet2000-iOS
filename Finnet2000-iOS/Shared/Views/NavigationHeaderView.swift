@@ -26,17 +26,16 @@ struct NavigationHeaderView: View {
 		.padding(.horizontal, 16)
 		.padding(.top, 10)
 		.padding(.bottom, 12)
-		.background(Color(.systemBackground))
+		.background(.clear)
 		.frame(maxWidth: .infinity)
 	}
 
 	private func headerButton(systemName: String, action: (() -> Void)?) -> some View {
 		Button(action: { action?() }) {
 			Image(systemName: systemName)
-				.font(.system(size: 18, weight: .semibold))
-				.foregroundStyle(Color.black)
-				.frame(width: 40, height: 40)
-				.background(Color.black.opacity(0.1), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+				.font(.system(size: 20, weight: .semibold))
+				.foregroundStyle(Color.primary)
+				.frame(width: 45, height: 45)
 		}
 		.buttonStyle(.plain)
 	}
