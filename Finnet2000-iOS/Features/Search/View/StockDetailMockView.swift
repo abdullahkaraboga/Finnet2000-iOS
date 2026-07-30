@@ -18,7 +18,7 @@ struct StockDetailMockView: View {
 
     var body: some View {
         ZStack(alignment: .top) {
-            Color(uiColor: .secondarySystemGroupedBackground)
+            Color.sdAppBackground
                 .ignoresSafeArea()
             VStack(spacing: 0) {
                 stockHeader
@@ -50,7 +50,7 @@ struct StockDetailMockView: View {
                     .padding(.horizontal, 16)
                     .padding(.top, 12)
                     .padding(.bottom, 28)
-                    .background(Color(uiColor: .systemBackground))
+                    .background(Color.sdPrimaryBackground)
                 }
             }
             .ignoresSafeArea(edges: .bottom)
@@ -90,9 +90,9 @@ struct StockDetailMockView: View {
                 Button { dismiss() } label: {
                     Image(systemName: "chevron.left")
                         .font(.system(size: 17, weight: .semibold))
-                        .foregroundStyle(Color.sdDark)
+                        .foregroundStyle(Color.primary)
                         .frame(width: 40, height: 40)
-                        .background(Color(.systemBackground),
+                        .background(Color.sdPrimaryBackground,
                                     in: RoundedRectangle(cornerRadius: 12, style: .continuous))
                 }
                 .buttonStyle(.plain)
@@ -111,7 +111,7 @@ struct StockDetailMockView: View {
             }
             .padding(.horizontal, 16)
             .padding(.top, 10)
-            .background(Color(.systemBackground))
+            .background(Color.sdPrimaryBackground)
 
 
             HStack(spacing: 12) {
@@ -126,7 +126,7 @@ struct StockDetailMockView: View {
                 VStack(alignment: .leading, spacing: 3) {
                     Text(SDData.symbol)
                         .font(.system(size: 17, weight: .bold))
-                        .foregroundStyle(Color.sdDark)
+                        .foregroundStyle(Color.primary)
                     Text(SDData.company)
                         .font(.system(size: 11))
                         .foregroundStyle(Color.secondary)
@@ -136,7 +136,7 @@ struct StockDetailMockView: View {
                 VStack(alignment: .trailing, spacing: 3) {
                     Text(SDData.price)
                         .font(.system(size: 16, weight: .bold))
-                        .foregroundStyle(Color.sdDark)
+                        .foregroundStyle(Color.primary)
                     Text(SDData.change)
                         .font(.system(size: 12, weight: .semibold))
                         .foregroundStyle(Color.sdGreen)
@@ -148,16 +148,16 @@ struct StockDetailMockView: View {
             .padding(.horizontal, 16)
             .padding(.top, 4)
             .padding(.bottom, 16)
-        }.background(Color(.systemBackground))
+        }.background(Color.sdPrimaryBackground)
 
     }
 
     private func sdNavButton(_ systemName: String) -> some View {
         Image(systemName: systemName)
             .font(.system(size: 16, weight: .semibold))
-            .foregroundStyle(Color.sdDark)
+            .foregroundStyle(Color.primary)
             .frame(width: 40, height: 40)
-            .background(Color(.systemBackground),
+            .background(Color.sdPrimaryBackground,
                         in: RoundedRectangle(cornerRadius: 12, style: .continuous))
     }
 
@@ -172,7 +172,7 @@ struct StockDetailMockView: View {
                     VStack(spacing: 0) {
                         Text(tab)
                             .font(.system(size: 14, weight: selectedTab == tab ? .semibold : .regular))
-                            .foregroundStyle(selectedTab == tab ? Color.sdDark : Color.secondary)
+                            .foregroundStyle(selectedTab == tab ? Color.primary : Color.secondary)
                             .lineLimit(1)
                             .minimumScaleFactor(0.75)
                             .padding(.horizontal, 4)
@@ -187,7 +187,7 @@ struct StockDetailMockView: View {
             }
         }
         .padding(.horizontal, 16)
-        .background(Color.white)
+        .background(Color.sdPrimaryBackground)
         .overlay(alignment: .bottom) { Divider() }
     }
 
@@ -217,7 +217,7 @@ struct StockDetailMockView: View {
             .padding(.horizontal, 16)
             .padding(.vertical, 4)
         }
-        .background(Color.white)
+        .background(Color.sdPrimaryBackground)
         .overlay(alignment: .bottom) { Divider() }
     }
 
@@ -285,7 +285,7 @@ struct StockDetailMockView: View {
             .padding(.top, 16)
             .padding(.bottom, 96)
         }
-        .background(Color(uiColor: .secondarySystemGroupedBackground))
+        .background(Color.sdAppBackground)
     }
 
     // MARK: - Finansallar Content
@@ -312,7 +312,7 @@ struct StockDetailMockView: View {
             .padding(.top, 16)
             .padding(.bottom, 96)
         }
-        .background(Color(uiColor: .secondarySystemGroupedBackground))
+        .background(Color.sdAppBackground)
     }
 
     private var gelirTablosuView: some View {
@@ -326,7 +326,7 @@ struct StockDetailMockView: View {
             .padding(.top, 16)
             .padding(.bottom, 96)
         }
-        .background(Color(uiColor: .secondarySystemGroupedBackground))
+        .background(Color.sdAppBackground)
     }
 
     private var nakitAkimView: some View {
@@ -340,7 +340,7 @@ struct StockDetailMockView: View {
             .padding(.top, 16)
             .padding(.bottom, 96)
         }
-        .background(Color(uiColor: .secondarySystemGroupedBackground))
+        .background(Color.sdAppBackground)
     }
 
     // MARK: - Oranlar Content
@@ -375,7 +375,7 @@ struct StockDetailMockView: View {
             .padding(.top, 16)
             .padding(.bottom, 96)
         }
-        .background(Color(uiColor: .secondarySystemGroupedBackground))
+        .background(Color.sdAppBackground)
     }
 
     private var faaliyetEtkinligiView: some View {
@@ -389,7 +389,7 @@ struct StockDetailMockView: View {
             .padding(.top, 16)
             .padding(.bottom, 96)
         }
-        .background(Color(uiColor: .secondarySystemGroupedBackground))
+        .background(Color.sdAppBackground)
     }
 
     private var likiditeView: some View {
@@ -403,7 +403,7 @@ struct StockDetailMockView: View {
             .padding(.top, 16)
             .padding(.bottom, 96)
         }
-        .background(Color(uiColor: .secondarySystemGroupedBackground))
+        .background(Color.sdAppBackground)
     }
 
     private var karlilikView: some View {
@@ -417,7 +417,7 @@ struct StockDetailMockView: View {
             .padding(.top, 16)
             .padding(.bottom, 96)
         }
-        .background(Color(uiColor: .secondarySystemGroupedBackground))
+        .background(Color.sdAppBackground)
     }
 
     private var maliyetView: some View {
@@ -431,7 +431,7 @@ struct StockDetailMockView: View {
             .padding(.top, 16)
             .padding(.bottom, 96)
         }
-        .background(Color(uiColor: .secondarySystemGroupedBackground))
+        .background(Color.sdAppBackground)
     }
 
     private var piyasaCarpanlariView: some View {
@@ -445,7 +445,7 @@ struct StockDetailMockView: View {
             .padding(.top, 16)
             .padding(.bottom, 96)
         }
-        .background(Color(uiColor: .secondarySystemGroupedBackground))
+        .background(Color.sdAppBackground)
     }
 
     private var buyumeView: some View {
@@ -462,7 +462,7 @@ struct StockDetailMockView: View {
             .padding(.top, 16)
             .padding(.bottom, 96)
         }
-        .background(Color(uiColor: .secondarySystemGroupedBackground))
+        .background(Color.sdAppBackground)
     }
 
     // MARK: - Sektörel Analiz Content
@@ -492,7 +492,7 @@ struct StockDetailMockView: View {
             .padding(.top, 16)
             .padding(.bottom, 96)
         }
-        .background(Color(uiColor: .secondarySystemGroupedBackground))
+        .background(Color.sdAppBackground)
     }
 
     private var sektorOranlarView: some View {
@@ -509,7 +509,7 @@ struct StockDetailMockView: View {
             .padding(.top, 16)
             .padding(.bottom, 96)
         }
-        .background(Color(uiColor: .secondarySystemGroupedBackground))
+        .background(Color.sdAppBackground)
     }
 
     private var sektorGetiriView: some View {
@@ -526,7 +526,7 @@ struct StockDetailMockView: View {
             .padding(.top, 16)
             .padding(.bottom, 96)
         }
-        .background(Color(uiColor: .secondarySystemGroupedBackground))
+        .background(Color.sdAppBackground)
     }
 
     // MARK: - Helpers
@@ -556,14 +556,14 @@ struct StockDetailMockView: View {
                     HStack(spacing: 0) {
                         Text(rows[ri].0)
                             .font(.system(size: 12, weight: .medium))
-                            .foregroundStyle(Color.sdDark)
+                            .foregroundStyle(Color.primary)
                             .frame(width: 148, alignment: .leading)
                             .lineLimit(1)
                             .minimumScaleFactor(0.7)
                         ForEach(rows[ri].1.indices, id: \.self) { ci in
                             Text(rows[ri].1[ci])
                                 .font(.system(size: 11))
-                                .foregroundStyle(rows[ri].1[ci].hasPrefix("-") ? Color.sdRed : Color.sdDark)
+                                .foregroundStyle(rows[ri].1[ci].hasPrefix("-") ? Color.sdRed : Color.primary)
                                 .frame(width: 80, alignment: .trailing)
                         }
                     }
@@ -580,14 +580,18 @@ struct StockDetailMockView: View {
             HStack(spacing: 6) {
                 Text(title)
                     .font(.system(size: 19, weight: .bold))
-                    .foregroundStyle(Color.sdDark)
+                    .foregroundStyle(Color.primary)
                 Image(systemName: "info.circle.fill")
                     .font(.system(size: 13))
                     .foregroundStyle(Color.secondary.opacity(0.7))
             }
             content()
-                .background(Color.white)
+                .background(Color.sdPrimaryBackground)
                 .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .stroke(Color.secondary.opacity(0.12), lineWidth: 1)
+                )
         }
     }
 
@@ -639,12 +643,12 @@ struct StockDetailMockView: View {
     }
 
     private func sdCellColor(_ val: String, col: Int) -> Color {
-        guard col > 0 else { return Color.sdDark }
+        guard col > 0 else { return Color.primary }
         if val.hasPrefix("%-") || val.hasPrefix("-") { return Color.sdRed }
         if val == "Sat" { return Color.sdRed }
         if val == "Al"  { return Color.sdGreen }
         if val.hasPrefix("%") { return Color.sdGreen }
-        return Color.sdDark
+        return Color.primary
     }
 
     @ViewBuilder
@@ -671,11 +675,11 @@ struct StockDetailMockView: View {
                 HStack {
                     Text(SDData.funds[i].0)
                         .font(.system(size: 13))
-                        .foregroundStyle(Color.sdDark)
+                        .foregroundStyle(Color.primary)
                     Spacer()
                     Text(SDData.funds[i].1)
                         .font(.system(size: 13))
-                        .foregroundStyle(Color.sdDark)
+                        .foregroundStyle(Color.primary)
                 }
                 .padding(.horizontal, 12)
                 .padding(.vertical, 10)
@@ -703,11 +707,11 @@ struct StockDetailMockView: View {
                 HStack {
                     Text(rows[i].0)
                         .font(.system(size: 13))
-                        .foregroundStyle(Color.sdDark)
+                        .foregroundStyle(Color.primary)
                     Spacer()
                     Text(rows[i].1)
                         .font(.system(size: 13))
-                        .foregroundStyle(Color.sdDark)
+                        .foregroundStyle(Color.primary)
                 }
                 .padding(.horizontal, 12)
                 .padding(.vertical, 10)
@@ -726,6 +730,9 @@ private extension Color {
     static let sdBlue       = Color(red: 0.11, green: 0.39, blue: 0.78)
     static let sdPink       = Color(red: 1.00, green: 0.38, blue: 0.58)
     static let sdChartGreen = Color(red: 0.30, green: 0.79, blue: 0.49)
+
+    static let sdAppBackground = Color(uiColor: .secondarySystemGroupedBackground)
+    static let sdPrimaryBackground = Color(uiColor: .systemBackground)
 }
 
 // MARK: - Mock Data
