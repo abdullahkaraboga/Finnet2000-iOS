@@ -121,7 +121,14 @@ struct SideDrawerView: View {
     }
 
     private var drawerHeader: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        HStack(spacing: 14) {
+            Text(profile.initials)
+                .font(.system(size: 18, weight: .bold))
+                .foregroundStyle(Color(red: 0.14, green: 0.62, blue: 0.45))
+                .frame(width: 50, height: 50)
+                .background(Color.white)
+                .clipShape(Circle())
+                
             VStack(alignment: .leading, spacing: 4) {
                 Text(profile.name)
                     .font(.system(size: 16, weight: .bold))
@@ -134,7 +141,6 @@ struct SideDrawerView: View {
                     .lineLimit(1)
                     .minimumScaleFactor(0.9)
             }
-
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 18)

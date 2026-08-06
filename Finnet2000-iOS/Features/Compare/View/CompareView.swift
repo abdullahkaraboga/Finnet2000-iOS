@@ -14,60 +14,9 @@ struct CompareView: View {
                             .padding(.horizontal, 16)
                             .padding(.top, 16)
                             .padding(.bottom, 20)
-
-                        if let result = viewModel.compareResult {
-                            RadarChartSection(result: result)
-                                .padding(.horizontal, 16)
-                                .padding(.vertical, 20)
-                        }
-
-                        // 🔹 Hisse Fiyatları Çift Çizgi Grafik
-                        if let result = viewModel.compareResult {
-                            PriceChartSection(result: result,
-                                             leftKey: viewModel.selectedCode1,
-                                             rightKey: viewModel.selectedCode2)
-                                .padding(.horizontal, 16)
-                                .padding(.vertical, 20)
-                        }
-
-                        // 🔹 Risk Parametreleri
-                        if let result = viewModel.compareResult {
-                            RiskParametersSection(result: result, leftKey: viewModel.selectedCode1, rightKey: viewModel.selectedCode2)
-                                .padding(.horizontal, 16)
-                                .padding(.vertical, 20)
-                        }
-
-                        // 🔹 Getiriler
-                        if let result = viewModel.compareResult {
-                            ReturnsSection(result: result, leftKey: viewModel.selectedCode1, rightKey: viewModel.selectedCode2)
-                                .padding(.horizontal, 16)
-                                .padding(.vertical, 20)
-                        }
-
-
-                        // 🔹 Finansal Tablolar
-                        if let result = viewModel.compareResult {
-                            FinancialTablesSection(result: result, leftKey: viewModel.selectedCode1, rightKey: viewModel.selectedCode2)
-                                .padding(.horizontal, 16)
-                                .padding(.vertical, 20)
-                        }
-
-                        // 🔹 Finansal Analiz
-                        if let result = viewModel.compareResult {
-                            FinancialAnalysisSection(result: result, leftKey: viewModel.selectedCode1, rightKey: viewModel.selectedCode2)
-                                .padding(.horizontal, 16)
-                                .padding(.vertical, 20)
-                        }
-                        
-                        // 🔹 Hangi Fonlarda Var?
-                        if let result = viewModel.compareResult {
-                            FundsBarChartSection(result: result,
-                                                 leftKey: viewModel.selectedCode1,
-                                                 rightKey: viewModel.selectedCode2)
-                                .padding(.horizontal, 16)
-                                .padding(.vertical, 20)
-                        }
+                        contentSections
                     }
+                    
                     .padding(.bottom, 24)
                 }
                 .background(Color(.systemBackground))
@@ -97,80 +46,81 @@ extension CompareView {
 
     // MARK: Picker
     private var pickerSection: some View {
-        HStack(spacing: 12) {
-            stockMenuCard(slot: 1,
-                          selectedCode: $viewModel.selectedCode1,
-                          result: viewModel.compareResult)
-            stockMenuCard(slot: 2,
-                          selectedCode: $viewModel.selectedCode2,
-                          result: viewModel.compareResult)
+        HStack(alignment: .top, spacing: 12) {
+            SearchableStockDropdown(slot: 1,
+                                    selectedCode: $viewModel.selectedCode1,
+                                    result: viewModel.compareResult,
+                                    stocks: viewModel.stocks)
+                .zIndex(1) // Usually first item gets hidden by second, so base zIndex 1 is safe but dynamic zIndex inside handles it.
+            
+            SearchableStockDropdown(slot: 2,
+                                    selectedCode: $viewModel.selectedCode2,
+                                    result: viewModel.compareResult,
+                                    stocks: viewModel.stocks)
+                .zIndex(0)
         }
     }
+    
+    // MARK: Content Sections (extracted to help the compiler)
+    private var contentSections: some View {
+        Group {
+            // 🔹 Picker (no picker content here; picker is above)
 
-    private func stockMenuCard(slot: Int,
-                               selectedCode: Binding<String?>,
-                               result: CompareStocksResponse?) -> some View {
-        let detail = selectedCode.wrappedValue.flatMap { result?[$0] }
-        let accentColor: Color = slot == 1 ? Color(red: 0.22, green: 0.47, blue: 0.80) : Color.midGreen
-
-        return VStack(spacing: 6) {
-            Menu {
-                ForEach(viewModel.stocks) { stock in
-                    Button(stock.code) {
-                        selectedCode.wrappedValue = stock.code
-                    }
-                }
-            } label: {
-                HStack(spacing: 10) {
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 8)
-                            .fill(accentColor.opacity(0.25))
-                            .frame(width: 40, height: 40)
-                        if let logo = detail?.logo, let url = URL(string: logo) {
-                            AsyncImage(url: url) { img in
-                                img.resizable().scaledToFit()
-                            } placeholder: {
-                                Text(selectedCode.wrappedValue?.prefix(1).uppercased() ?? "F")
-                                    .font(.system(size: 18, weight: .bold))
-                                    .foregroundColor(.white)
-                            }
-                            .frame(width: 32, height: 32)
-                            .clipShape(RoundedRectangle(cornerRadius: 6))
-                        } else {
-                            Text(selectedCode.wrappedValue?.prefix(1).uppercased() ?? "F")
-                                .font(.system(size: 18, weight: .bold))
-                                .foregroundColor(.white)
-                        }
-                    }
-
-                    Text(selectedCode.wrappedValue ?? "\(slot). Hisse")
-                        .font(.system(size: 15, weight: .semibold))
-                        .foregroundColor(.white)
-                        .lineLimit(1)
-
-                    Spacer()
-
-                    Image(systemName: "chevron.down")
-                        .foregroundColor(.white.opacity(0.8))
-                        .font(.system(size: 13, weight: .semibold))
-                }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 10)
-                .background(accentColor)
-                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+            if let result = viewModel.compareResult {
+                RadarChartSection(result: result)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 20)
             }
 
-            if let name = detail?.name {
-                Text(name)
-                    .font(.system(size: 12))
-                    .foregroundColor(.secondary)
-                    .lineLimit(1)
+            // 🔹 Hisse Fiyatları Çift Çizgi Grafik
+            if let result = viewModel.compareResult {
+                PriceChartSection(result: result,
+                                  leftKey: viewModel.selectedCode1,
+                                  rightKey: viewModel.selectedCode2)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 20)
+            }
+
+            // 🔹 Risk Parametreleri
+            if let result = viewModel.compareResult {
+                RiskParametersSection(result: result, leftKey: viewModel.selectedCode1, rightKey: viewModel.selectedCode2)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 20)
+            }
+
+            // 🔹 Getiriler
+            if let result = viewModel.compareResult {
+                ReturnsSection(result: result, leftKey: viewModel.selectedCode1, rightKey: viewModel.selectedCode2)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 20)
+            }
+
+            // 🔹 Finansal Tablolar
+            if let result = viewModel.compareResult {
+                FinancialTablesSection(result: result, leftKey: viewModel.selectedCode1, rightKey: viewModel.selectedCode2)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 20)
+            }
+
+            // 🔹 Finansal Analiz
+            if let result = viewModel.compareResult {
+                FinancialAnalysisSection(result: result, leftKey: viewModel.selectedCode1, rightKey: viewModel.selectedCode2)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 20)
+            }
+
+            // 🔹 Hangi Fonlarda Var?
+            if let result = viewModel.compareResult {
+                FundsBarChartSection(result: result,
+                                     leftKey: viewModel.selectedCode1,
+                                     rightKey: viewModel.selectedCode2)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 20)
             }
         }
-        .frame(maxWidth: .infinity)
     }
-
-    // MARK: Loading
+    
+    // MARK: Loading Overlay
     private var loadingOverlay: some View {
         Group {
             if viewModel.isLoading {
@@ -181,8 +131,139 @@ extension CompareView {
                         .background(.ultraThinMaterial)
                         .cornerRadius(10)
                 }
+            } else {
+                EmptyView()
             }
         }
+    }
+}
+
+// MARK: - Searchable Stock Dropdown
+struct SearchableStockDropdown: View {
+    let slot: Int
+    @Binding var selectedCode: String?
+    let result: CompareStocksResponse?
+    let stocks: [StockListItem]
+    
+    @State private var isExpanded: Bool = false
+    @State private var searchText: String = ""
+    
+    var filteredStocks: [StockListItem] {
+        if searchText.isEmpty {
+            return stocks
+        } else {
+            return stocks.filter { $0.code.localizedCaseInsensitiveContains(searchText) }
+        }
+    }
+    
+    var body: some View {
+        let detail = selectedCode.flatMap { result?[$0] }
+        let accentColor: Color = slot == 1 ? Color(red: 0.22, green: 0.47, blue: 0.80) : Color.midGreen
+        
+        VStack(spacing: 6) {
+            ZStack(alignment: .top) {
+                Button {
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        isExpanded.toggle()
+                    }
+                } label: {
+                    HStack(spacing: 10) {
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 8)
+                                .fill(accentColor.opacity(0.25))
+                                .frame(width: 40, height: 40)
+                            if let logo = detail?.logo, let url = URL(string: logo) {
+                                AsyncImage(url: url) { img in
+                                    img.resizable().scaledToFit()
+                                } placeholder: {
+                                    Text(selectedCode?.prefix(1).uppercased() ?? "F")
+                                        .font(.system(size: 18, weight: .bold))
+                                        .foregroundColor(.white)
+                                }
+                                .frame(width: 32, height: 32)
+                                .clipShape(RoundedRectangle(cornerRadius: 6))
+                            } else {
+                                Text(selectedCode?.prefix(1).uppercased() ?? "F")
+                                    .font(.system(size: 18, weight: .bold))
+                                    .foregroundColor(.white)
+                            }
+                        }
+
+                        Text(selectedCode ?? "\(slot). Hisse")
+                            .font(.system(size: 15, weight: .semibold))
+                            .foregroundColor(.white)
+                            .lineLimit(1)
+
+                        Spacer(minLength: 0)
+
+                        Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
+                            .foregroundColor(.white.opacity(0.8))
+                            .font(.system(size: 13, weight: .semibold))
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 10)
+                    .background(accentColor)
+                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                }
+                
+                if isExpanded {
+                    VStack(spacing: 0) {
+                        // Search bar
+                        TextField("Ara...", text: $searchText)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 10)
+                            .background(Color.white)
+                            .cornerRadius(8)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                            )
+                            .padding(12)
+                        
+                        // List
+                        ScrollView {
+                            LazyVStack(alignment: .leading, spacing: 0) {
+                                ForEach(filteredStocks) { stock in
+                                    Button {
+                                        selectedCode = stock.code
+                                        withAnimation {
+                                            isExpanded = false
+                                            searchText = ""
+                                        }
+                                    } label: {
+                                        Text(stock.code)
+                                            .font(.system(size: 16, weight: .bold))
+                                            .foregroundColor(.black)
+                                            .padding(.vertical, 14)
+                                            .padding(.horizontal, 16)
+                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                    }
+                                }
+                            }
+                        }
+                        .frame(maxHeight: 250)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .background(Color.white)
+                    .cornerRadius(12)
+                    .shadow(color: Color.black.opacity(0.15), radius: 10, x: 0, y: 5)
+                    .offset(y: 65)
+                }
+            }
+            .zIndex(isExpanded ? 100 : 0) // Important to float above sibling cards
+
+            if let name = detail?.name {
+                Text(name)
+                    .font(.system(size: 12))
+                    .foregroundColor(.secondary)
+                    .lineLimit(1)
+            } else {
+                Text(" ") // Keeps layout stable
+                    .font(.system(size: 12))
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .zIndex(isExpanded ? 100 : 0) // Apply to parent container too for HStack z-ordering
     }
 }
 
