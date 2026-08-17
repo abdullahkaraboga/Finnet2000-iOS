@@ -1,8 +1,10 @@
 import SwiftUI
 
-// MARK: - StockDetailMockView
+// MARK: - StockDetailView
 
-struct StockDetailMockView: View {
+struct StockDetailView: View {
+    let stockCode: String
+    @StateObject private var viewModel = StockDetailViewModel()
     @Environment(\.dismiss) private var dismiss
     @State private var selectedTab = "Özet"
     @State private var selectedSubTab = ""
@@ -69,16 +71,19 @@ struct StockDetailMockView: View {
         }
         .navigationDestination(isPresented: $navigateToMatriksBridge) {
             MatriksBridgeView(
-                stockSymbol: SDData.symbol,
-                stockName: SDData.company,
-                stockPrice: SDData.price,
-                stockChange: SDData.change,
-                stockDate: SDData.date,
+                stockSymbol: viewModel.symbol,
+                stockName: viewModel.company,
+                stockPrice: viewModel.price,
+                stockChange: viewModel.change,
+                stockDate: viewModel.date,
                 postAuthDestination: .orderEntry
             )
         }
         .onChange(of: selectedTab) { _, newTab in
             selectedSubTab = subTabs[newTab]?.first ?? ""
+        }
+        .onAppear {
+            viewModel.fetch(stockCode: stockCode)
         }
     }
 
@@ -124,23 +129,23 @@ struct StockDetailMockView: View {
                             .foregroundStyle(.white)
                     }
                 VStack(alignment: .leading, spacing: 3) {
-                    Text(SDData.symbol)
+                    Text(viewModel.symbol)
                         .font(.system(size: 17, weight: .bold))
                         .foregroundStyle(Color.primary)
-                    Text(SDData.company)
+                    Text(viewModel.company)
                         .font(.system(size: 11))
                         .foregroundStyle(Color.secondary)
                         .lineLimit(1)
                 }
                 Spacer()
                 VStack(alignment: .trailing, spacing: 3) {
-                    Text(SDData.price)
+                    Text(viewModel.price)
                         .font(.system(size: 16, weight: .bold))
                         .foregroundStyle(Color.primary)
-                    Text(SDData.change)
+                    Text(viewModel.change)
                         .font(.system(size: 12, weight: .semibold))
                         .foregroundStyle(Color.sdGreen)
-                    Text(SDData.date)
+                    Text(viewModel.date)
                         .font(.system(size: 10))
                         .foregroundStyle(Color.secondary)
                 }
@@ -240,50 +245,78 @@ struct StockDetailMockView: View {
 
     private var ozetContent: some View {
         ScrollView(showsIndicators: false) {
-            VStack(alignment: .leading, spacing: 22) {
-                sectionCard("Beşgen Grafik") {
-                    SDRadarChart(entries: SDData.radarEntries)
-                        .frame(height: 240)
-                        .padding(.vertical, 14)
-                        .padding(.horizontal, 10)
+            if viewModel.isLoading {
+                ProgressView("Yükleniyor...")
+                    .padding(.top, 50)
+            } else {
+                VStack(alignment: .leading, spacing: 22) {
+                    sectionCard("Beşgen Grafik") {
+                        SDRadarChart(entries: SDData.radarEntries)
+                            .frame(height: 240)
+                            .padding(.vertical, 14)
+                            .padding(.horizontal, 10)
+                    }
+                    sectionCard("Fiyat Grafiği") {
+                        SDLineChart(points: viewModel.pricePoints)
+                            .frame(height: 160)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 14)
+                    }
+                    sectionCard("Getiriler") {
+                        sdMetricsTable(
+                            headers: ["", "Günlük", "Haftalık", "Aylık", "Yıllık"],
+                            rows: viewModel.returnsRows
+                        )
+                    }
+                    sectionCard("Hareketli Ortalamalar") {
+                        sdMetricsTable(
+                            headers: ["", "20MA", "50MA", "100MA", "200MA"],
+                            rows: viewModel.movingAvgRows
+                        )
+                    }
+                    sectionCard("Momentum İndikatörleri") {
+                        sdMetricsTable(
+                            headers: ["", "RSI", "STOK", "MACD", "STOKORT"],
+                            rows: viewModel.momentumRows
+                        )
+                    }
+                    sectionCard("Hangi Fonlarda Var?") {
+                        sdFundList()
+                    }
+                    sectionCard("Piyasa Çarpanları") {
+                        sdPairList(viewModel.multiplesRows, headers: ("Oran", "Değer"))
+                    }
+                    sectionCard("Özet Bilanço") {
+                        sdPairList(viewModel.balanceRows, headers: ("Kalem", "Değer"))
+                    }
+                    if !viewModel.incomeRows.isEmpty {
+                        sectionCard("Özet Gelir Tablosu") {
+                            sdPairList(viewModel.incomeRows, headers: ("Kalem", "Değer"))
+                        }
+                    }
+                    if !viewModel.sectoralRows.isEmpty {
+                        sectionCard("Özet Sektörel Analiz") {
+                            sdPairList(viewModel.sectoralRows, headers: ("Hisse", viewModel.sectoralValueHeader))
+                        }
+                    }
+                    if !viewModel.pairTradeRows.isEmpty {
+                        sectionCard("Pair Trade") {
+                            sdPairList(viewModel.pairTradeRows, headers: ("Hisse", "Değer"))
+                        }
+                    }
+                    if !viewModel.partnershipRows.isEmpty {
+                        sectionCard("Ortaklık Yapısı") {
+                            sdMetricsTable(
+                                headers: ["İsim", "Sermaye", "Oran"],
+                                rows: viewModel.partnershipRows
+                            )
+                        }
+                    }
                 }
-                sectionCard("Fiyat Grafiği") {
-                    SDLineChart(points: SDData.pricePoints)
-                        .frame(height: 160)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 14)
-                }
-                sectionCard("Getiriler") {
-                    sdMetricsTable(
-                        headers: ["", "Günlük", "Haftalık", "Aylık", "Yıllık"],
-                        rows: SDData.returnsRows
-                    )
-                }
-                sectionCard("Hareketli Ortalamalar") {
-                    sdMetricsTable(
-                        headers: ["", "20MA", "50MA", "100MA", "200MA"],
-                        rows: SDData.movingAvgRows
-                    )
-                }
-                sectionCard("Momentum İndikatörleri") {
-                    sdMetricsTable(
-                        headers: ["", "RSI", "STOK", "MACD", "STOKORT"],
-                        rows: SDData.momentumRows
-                    )
-                }
-                sectionCard("Hangi Fonlarda Var?") {
-                    sdFundList()
-                }
-                sectionCard("Piyasa Çarpanları") {
-                    sdPairList(SDData.multiplesRows, headers: ("Oran", "Değer"))
-                }
-                sectionCard("Özet Bilanço") {
-                    sdPairList(SDData.balanceRows, headers: ("Kalem", "Değer"))
-                }
+                .padding(.horizontal, 12)
+                .padding(.top, 16)
+                .padding(.bottom, 96)
             }
-            .padding(.horizontal, 12)
-            .padding(.top, 16)
-            .padding(.bottom, 96)
         }
         .background(Color.sdAppBackground)
     }
@@ -347,115 +380,33 @@ struct StockDetailMockView: View {
 
     @ViewBuilder
     private var oranlarContent: some View {
-        if selectedSubTab == "Karlılık" {
-            karlilikView
-        } else if selectedSubTab == "Maliyet" {
-            maliyetView
-        } else if selectedSubTab == "Piyasa Çarpanları" {
-            piyasaCarpanlariView
-        } else if selectedSubTab == "Büyüme" {
-            buyumeView
-        } else if selectedSubTab == "Finansal Yapı" {
-            finansalYapiView
-        } else if selectedSubTab == "Faaliyet Etkinliği" {
-            faaliyetEtkinligiView
-        } else {
-            likiditeView
-        }
-    }
-
-    private var finansalYapiView: some View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: 22) {
-                sectionCard("Finansal Yapı Oranları") {
-                    sdPairList(SDData.finansalYapiRows, headers: ("Oran", "Değer"))
-                }
-            }
-            .padding(.horizontal, 12)
-            .padding(.top, 16)
-            .padding(.bottom, 96)
-        }
-        .background(Color.sdAppBackground)
-    }
-
-    private var faaliyetEtkinligiView: some View {
-        ScrollView(showsIndicators: false) {
-            VStack(alignment: .leading, spacing: 22) {
-                sectionCard("Faaliyet Etkinliği Oranları") {
-                    sdPairList(SDData.faaliyetEtkinligiRows, headers: ("Oran", "Değer"))
-                }
-            }
-            .padding(.horizontal, 12)
-            .padding(.top, 16)
-            .padding(.bottom, 96)
-        }
-        .background(Color.sdAppBackground)
-    }
-
-    private var likiditeView: some View {
-        ScrollView(showsIndicators: false) {
-            VStack(alignment: .leading, spacing: 22) {
-                sectionCard("Likidite Oranları") {
-                    sdPairList(SDData.likiditeRows, headers: ("Oran", "Değer"))
-                }
-            }
-            .padding(.horizontal, 12)
-            .padding(.top, 16)
-            .padding(.bottom, 96)
-        }
-        .background(Color.sdAppBackground)
-    }
-
-    private var karlilikView: some View {
-        ScrollView(showsIndicators: false) {
-            VStack(alignment: .leading, spacing: 22) {
-                sectionCard("Karlılık Oranları") {
-                    sdPairList(SDData.karlilikRows, headers: ("Oran", "Değer"))
-                }
-            }
-            .padding(.horizontal, 12)
-            .padding(.top, 16)
-            .padding(.bottom, 96)
-        }
-        .background(Color.sdAppBackground)
-    }
-
-    private var maliyetView: some View {
-        ScrollView(showsIndicators: false) {
-            VStack(alignment: .leading, spacing: 22) {
-                sectionCard("Maliyet Oranları") {
-                    sdPairList(SDData.maliyetRows, headers: ("Kalem", "Oran"))
-                }
-            }
-            .padding(.horizontal, 12)
-            .padding(.top, 16)
-            .padding(.bottom, 96)
-        }
-        .background(Color.sdAppBackground)
-    }
-
-    private var piyasaCarpanlariView: some View {
-        ScrollView(showsIndicators: false) {
-            VStack(alignment: .leading, spacing: 22) {
-                sectionCard("Piyasa Çarpanları") {
-                    sdPairList(SDData.piyasaCarpanlariRows, headers: ("Oran", "Değer"))
-                }
-            }
-            .padding(.horizontal, 12)
-            .padding(.top, 16)
-            .padding(.bottom, 96)
-        }
-        .background(Color.sdAppBackground)
-    }
-
-    private var buyumeView: some View {
-        ScrollView(showsIndicators: false) {
-            VStack(alignment: .leading, spacing: 22) {
-                sectionCard("Büyüme Oranları") {
-                    sdMetricsTable(
-                        headers: ["", "2022/12", "2023/12", "2024/12"],
-                        rows: SDData.buyumeRows
+                if viewModel.isLoading {
+                    ProgressView("Yükleniyor...")
+                        .frame(maxWidth: .infinity, alignment: .center)
+                } else if viewModel.errorMessage != nil && viewModel.ratiosData == nil {
+                    ContentUnavailableView(
+                        "Yüklenemedi",
+                        systemImage: "exclamationmark.triangle",
+                        description: Text(viewModel.errorMessage ?? "Oranlar yüklenirken hata oluştu.")
                     )
+                } else {
+                    let rows = viewModel.ratioRows(for: selectedSubTab)
+                    if rows.isEmpty {
+                        ContentUnavailableView(
+                            "Veri Bulunmuyor",
+                            systemImage: "tray",
+                            description: Text("Bu kategori için oran verisi bulunmuyor.")
+                        )
+                    } else {
+                        sectionCard("\(selectedSubTab) Oranları") {
+                            sdMetricsTable(
+                                headers: ["Oran", viewModel.symbol, "Sektör Ort.", "Medyan"],
+                                rows: rows
+                            )
+                        }
+                    }
                 }
             }
             .padding(.horizontal, 12)
@@ -671,19 +622,19 @@ struct StockDetailMockView: View {
             .padding(.horizontal, 12)
             .padding(.vertical, 9)
             Divider().padding(.horizontal, 12)
-            ForEach(SDData.funds.indices, id: \.self) { i in
+            ForEach(viewModel.funds.indices, id: \.self) { i in
                 HStack {
-                    Text(SDData.funds[i].0)
+                    Text(viewModel.funds[i].0)
                         .font(.system(size: 13))
                         .foregroundStyle(Color.primary)
                     Spacer()
-                    Text(SDData.funds[i].1)
+                    Text(viewModel.funds[i].1)
                         .font(.system(size: 13))
                         .foregroundStyle(Color.primary)
                 }
                 .padding(.horizontal, 12)
                 .padding(.vertical, 10)
-                if i < SDData.funds.count - 1 { Divider().padding(.horizontal, 12) }
+                if i < viewModel.funds.count - 1 { Divider().padding(.horizontal, 12) }
             }
         }
     }
@@ -824,65 +775,6 @@ private enum SDData {
         ("Yatırım Faal.",    ["-0,4Mi", "-0,8Mi", "-0,6Mi", "-1,2Mi", "-1,5Mi"]),
         ("Finansman Faal.",  ["-0,2Mi", "-0,3Mi", "-0,4Mi", "-0,6Mi", "-0,8Mi"]),
         ("Dönem Sonu Nakit", ["0,4Mi", "1,2Mi", "1,8Mi", "2,6Mi", "3,4Mi"])
-    ]
-
-    // Oranlar
-    static let likiditeRows: [(String, String)] = [
-        ("Cari Oran",              "2,14"),
-        ("Asit-Test Oranı",        "1,87"),
-        ("Nakit Oranı",            "0,92"),
-        ("Net Çalışma Sermayesi",  "3,0Mi ₺")
-    ]
-
-    static let karlilikRows: [(String, String)] = [
-        ("Net Kar Marjı",          "%25,0"),
-        ("Brüt Kar Marjı",         "%46,4"),
-        ("FAVÖK Marjı",            "%36,9"),
-        ("Özkaynak Karlılığı (ROE)", "%16,9"),
-        ("Aktif Karlılığı (ROA)",  "%11,5")
-    ]
-
-    static let maliyetRows: [(String, String)] = [
-        ("SMM / Net Satış",            "%53,6"),
-        ("Faiz Gideri / Net Satış",    "%3,2"),
-        ("Paz. Gideri / Net Satış",    "%4,8"),
-        ("Gen. Yön. Gideri / Net Satış", "%3,1"),
-        ("Toplam Gider / Net Satış",   "%64,7")
-    ]
-
-    static let piyasaCarpanlariRows: [(String, String)] = [
-        ("F/K (Fiyat/Kazanç)",          "26,53"),
-        ("PD/DD (Piyasa D./Defter D.)", "30,15"),
-        ("FD/FAVÖK",                    "16,42"),
-        ("FD/Satış",                    "6,10"),
-        ("Fiyat/Nakit Akım",            "21,40"),
-        ("Temettü Verimi",              "%1,2")
-    ]
-
-    static let buyumeRows: [[String]] = [
-        ["Net Satışlar",    "%23,5", "%112,5", "%23,5"],
-        ["Net Kar",         "%18,7", "%128,5", "%31,3"],
-        ["FAVÖK",           "%20,8", "%118,2", "%29,2"],
-        ["Özkaynaklar",     "%15,6", "%9,4",   "%27,8"]
-    ]
-
-    static let finansalYapiRows: [(String, String)] = [
-        ("Borç / Özkaynak",          "0,47"),
-        ("Finansal Kaldıraç",         "1,47"),
-        ("Borç / Toplam Varlık",      "%31,9"),
-        ("Özkaynak / Toplam Varlık",  "%68,1"),
-        ("Net Borç / FAVÖK",          "2,65"),
-        ("Faiz Karşılama Oranı",      "8,44")
-    ]
-
-    static let faaliyetEtkinligiRows: [(String, String)] = [
-        ("Varlık Devir Hızı",         "0,46"),
-        ("Alacak Devir Hızı",          "9,82"),
-        ("Ort. Tahsilat Süresi",       "37 gün"),
-        ("Stok Devir Hızı",            "4,15"),
-        ("Ort. Stok Tutma Süresi",     "88 gün"),
-        ("Borç Devir Hızı",            "6,30"),
-        ("Ort. Ödeme Süresi",          "58 gün")
     ]
 
     // Sektörel Analiz
@@ -1085,5 +977,5 @@ private struct SDLineChart: View {
 }
 
 #Preview {
-    StockDetailMockView()
+    StockDetailView(stockCode: "ASELS")
 }

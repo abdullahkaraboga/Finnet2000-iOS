@@ -119,7 +119,7 @@ struct SideDrawerView: View {
             .ignoresSafeArea()
         }
     }
-
+ 
     private var drawerHeader: some View {
         HStack(spacing: 14) {
             Text(profile.initials)

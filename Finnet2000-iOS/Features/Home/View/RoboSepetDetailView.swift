@@ -4,22 +4,53 @@ import Charts
 // MARK: - RoboSepetDetailView
 
 struct RoboSepetDetailView: View {
-    let detail: RoboSepetDetailResponse
+    let portfolioId: Int
+    @StateObject private var viewModel = RoboSepetDetailViewModel()
     var onBack: (() -> Void)? = nil
     @Environment(\.dismiss) private var dismiss
     @State private var isFavourite = false
 
     var body: some View {
         NavigationStack {
+            Group {
+                if viewModel.isLoading {
+                    ProgressView("Detay yükleniyor...")
+                } else if let error = viewModel.errorMessage {
+                    VStack(spacing: 12) {
+                        Text(error)
+                            .foregroundColor(.red)
+                            .multilineTextAlignment(.center)
+                        Button("Tekrar Dene") {
+                            viewModel.fetchRoboSepetDetail(portfolioId: portfolioId)
+                        }
+                        .buttonStyle(.bordered)
+                    }
+                    .padding()
+                } else if let detail = viewModel.detail {
+                    contentView(detail: detail)
+                } else {
+                    Text("Veri bulunamadı.")
+                        .foregroundColor(.secondary)
+                }
+            }
+            .toolbar(.hidden, for: .navigationBar)
+            .onAppear {
+                if viewModel.detail == nil {
+                    viewModel.fetchRoboSepetDetail(portfolioId: portfolioId)
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func contentView(detail: RoboSepetDetailResponse) -> some View {
             VStack(spacing: 0) {
                 // ── Navigation Header ──────────────────────────────────
-                rsDetailNavBar(
+                RSNavBar(
+                    detail: detail,
                     isFavourite: $isFavourite,
                     onBack: onBack ?? { dismiss() }
                 )
-
-                // ── Summary strip ──────────────────────────────────────
-                summaryStrip
 
                 ScrollView {
                     VStack(spacing: 0) {
@@ -90,90 +121,83 @@ struct RoboSepetDetailView: View {
                 .background(Color(.systemBackground))
             }
         }
-        .toolbar(.hidden, for: .navigationBar)
     }
 
-    // MARK: Summary strip
 
-    private var summaryStrip: some View {
-        HStack(spacing: 12) {
-            VStack(alignment: .center, spacing: 5) {
-                RSRiskBadge(code: detail.code)
-
-                HStack(spacing: 5) {
-                    Text(detail.code)
-                        .font(.system(size: 13, weight: .bold))
-                        .foregroundColor(.primary)
-                    Text(detail.name)
-                        .font(.system(size: 12))
-                        .foregroundColor(.secondary)
-                        .lineLimit(1)
-                }
-            }
-
-            Spacer()
-
-            let isPositive = detail.dailyReturn >= 0
-            HStack(spacing: 4) {
-                Image(systemName: isPositive ? "arrowtriangle.up.fill" : "arrowtriangle.down.fill")
-                    .font(.system(size: 10, weight: .semibold))
-                    .foregroundColor(isPositive ? .midGreen : Color.red)
-                Text(String(format: "%%%.2f", detail.dailyReturn))
-                    .font(.system(size: 14, weight: .bold))
-                    .foregroundColor(isPositive ? .midGreen : Color.red)
-            }
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
-        .background(Color(.systemBackground))
-    }
 
     private var sectionDivider: some View {
         Divider().background(Color(.separator).opacity(0.4))
     }
-}
+
 
 // MARK: - Navigation Bar
 
-private struct rsDetailNavBar: View {
+private struct RSNavBar: View {
+    let detail: RoboSepetDetailResponse
     @Binding var isFavourite: Bool
     var onBack: (() -> Void)?
 
+    private var isPositive: Bool { detail.dailyReturn >= 0 }
+    private var returnColor: Color { isPositive ? .midGreen : Color.red }
+
     var body: some View {
-        HStack(spacing: 0) {
-            Button { onBack?() } label: {
-                Image(systemName: "chevron.left")
-                    .font(.system(size: 17, weight: .semibold))
-                    .foregroundColor(.white)
-                    .frame(width: 40, height: 40)
-                    .background(Color.white.opacity(0.15),
-                                in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+        VStack(spacing: 0) {
+            // ── Top row: back + actions ──────────────────────────────
+            HStack {
+                Button { onBack?() } label: {
+                    Image(systemName: "chevron.left")
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundStyle(.primary)
+                        .frame(width: 40, height: 40)
+                        .background(.thinMaterial,
+                                    in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                }
+                .buttonStyle(.plain)
+
+                Spacer()
+
+                Button { isFavourite.toggle() } label: {
+                    Image(systemName: isFavourite ? "heart.fill" : "heart")
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundStyle(isFavourite ? Color.red : .primary)
+                        .frame(width: 40, height: 40)
+                        .background(.thinMaterial,
+                                    in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                }
+                .buttonStyle(.plain)
             }
-            .buttonStyle(.plain)
+            .padding(.horizontal, 16)
+            .padding(.top, 10)
 
-            Spacer()
+            // ── Bottom row: avatar + name + value ───────────────────
+            HStack(spacing: 12) {
+                RSRiskBadge(code: detail.code)
 
-            Image("finnet2000_logo_light")
-                .resizable()
-                .scaledToFit()
-                .frame(height: 38)
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(detail.name)
+                        .font(.system(size: 17, weight: .bold))
+                        .foregroundStyle(.primary)
+                    Text(detail.code)
+                        .font(.system(size: 11))
+                        .foregroundStyle(.secondary)
+                }
 
-            Spacer()
+                Spacer()
 
-            Button { isFavourite.toggle() } label: {
-                Image(systemName: isFavourite ? "heart.fill" : "heart")
-                    .font(.system(size: 17, weight: .semibold))
-                    .foregroundColor(isFavourite ? Color.red : .white)
-                    .frame(width: 40, height: 40)
-                    .background(Color.white.opacity(0.15),
-                                in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                VStack(alignment: .trailing, spacing: 3) {
+                    Text(String(format: "%%%.2f", detail.dailyReturn))
+                        .font(.system(size: 17, weight: .bold))
+                        .foregroundColor(returnColor)
+                    Text("Günlük")
+                        .font(.system(size: 11))
+                        .foregroundStyle(.secondary)
+                }
             }
-            .buttonStyle(.plain)
+            .padding(.horizontal, 16)
+            .padding(.top, 8)
+            .padding(.bottom, 16)
         }
-        .padding(.horizontal, 16)
-        .padding(.top, 10)
-        .padding(.bottom, 12)
-        .background(Color.black)
+        .background(.regularMaterial)
         .frame(maxWidth: .infinity)
     }
 }
@@ -696,6 +720,6 @@ struct RSSectionHeader: View {
 // MARK: - Preview
 
 #Preview {
-    RoboSepetDetailView(detail: .mock, onBack: {})
+    RoboSepetDetailView(portfolioId: 1, onBack: {})
 }
 

@@ -49,7 +49,7 @@ struct SearchView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
                 List(viewModel.filteredStocks) { stock in
-                    NavigationLink { StockDetailMockView() } label: {
+                    NavigationLink { StockDetailView(stockCode: stock.code) } label: {
                         SearchStockRow(stock: stock)
                     }
                 }
@@ -63,7 +63,7 @@ struct SearchView: View {
         .toolbarBackground(.visible, for: .navigationBar)
         .toolbarColorScheme(.light, for: .navigationBar)
         .task {
-            viewModel.loadStocks()
+            viewModel.loadStocks(defaultRequest: true)
         }
     }
 }

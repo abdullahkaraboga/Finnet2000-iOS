@@ -11,7 +11,7 @@ protocol SearchRepositoryProtocol {
 
 final class SearchRepository: SearchRepositoryProtocol {
 
-    private let baseURL = "http://api.finnet2000.com/api/Filter/GetFilteredStocks"
+    private let baseURL = "https://api.finnet2000.com/api/Filter/GetFilteredStocks"
 
     func fetchFilteredStocks(request: FilterRequest, defaultRequest: Bool = false) async throws -> FilteredStocksResponse {
         guard var components = URLComponents(string: baseURL) else {

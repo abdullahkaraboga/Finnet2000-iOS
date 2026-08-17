@@ -81,7 +81,7 @@ struct ListsView: View {
                         ListSectionHeader(title: "Hisselerim", icon: "chart.line.uptrend.xyaxis", sortOrder: $stockSort)
                         
                         ForEach(sortedStocks) { stock in
-                            NavigationLink { StockDetailMockView() } label: {
+                            NavigationLink { StockDetailView(stockCode: stock.code) } label: {
                                 HStack {
                                     AsyncImage(url: URL(string: stock.logoPath)) { image in
                                         image.resizable()
@@ -213,7 +213,7 @@ struct ListsView: View {
 
                         ForEach(viewModel.portfolios) { item in
                             NavigationLink {
-                                PortfolioDetailView(detail: .mock)
+                                PortfolioDetailView(portfolioId: item.portfolioId)
                             } label: {
                                 HStack(spacing: 14) {
                                     AsyncImage(url: URL(string: item.logoPath)) { image in

@@ -6,56 +6,89 @@ import Combine
 // MARK: - PortfolioDetailView
 
 struct PortfolioDetailView: View {
-    let detail: PortfolioDetailResponse
+    let portfolioId: Int
+    @StateObject private var viewModel = PortfolioDetailViewModel()
     var onBack: (() -> Void)? = nil
     @Environment(\.dismiss) private var dismiss
 
-
     var body: some View {
         NavigationStack {
-            VStack(spacing: 0) {
-
-                // ── Navigation Bar ──────────────────────────────────────
-                PDNavBar(
-                    detail: detail,
-                    onBack: onBack ?? { dismiss() },
-                    onEdit: { /* TODO: portföy düzenle */ },
-                    onDelete: { /* TODO: portföy sil */ }
-                )
-
-                ScrollView {
-                    VStack(spacing: 0) {
-
-                        // ── Green stats strip ───────────────────────────
-                        PDStatsStrip(
-                            dailyReturn: detail.dailyReturn,
-                            totalReturn: detail.totalReturn
-                        )
-
-                        // ── 100 Liram Ne Oldu? ──────────────────────────
-                        pdSectionDivider
-                        PDPerformanceSection(performance: detail.performance)
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 12)
-
-                        // ── Portföy Ağırlıkları ─────────────────────────
-                        pdSectionDivider
-                        PDWeightsSection(weights: detail.weights)
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 12)
-
-                        // ── Açık Pozisyonlar ────────────────────────────
-                        pdSectionDivider
-                        PDOpenPositionsSection(positions: detail.openPositions)
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 12)
+            Group {
+                if viewModel.isLoading {
+                    ProgressView("Portföy detayı yükleniyor...")
+                } else if let error = viewModel.errorMessage {
+                    VStack(spacing: 12) {
+                        Text(error)
+                            .foregroundColor(.red)
+                            .multilineTextAlignment(.center)
+                        Button("Tekrar Dene") {
+                            viewModel.fetchPortfolioDetail(portfolioId: portfolioId)
+                        }
+                        .buttonStyle(.bordered)
                     }
-                    .padding(.bottom, 32)
+                    .padding()
+                } else if let detail = viewModel.detail {
+                    contentView(detail: detail)
+                } else {
+                    Text("Veri bulunamadı.")
+                        .foregroundColor(.secondary)
                 }
-                .background(Color(.systemBackground))
+            }
+            .toolbar(.hidden, for: .navigationBar)
+            .onAppear {
+                if viewModel.detail == nil {
+                    viewModel.fetchPortfolioDetail(portfolioId: portfolioId)
+                }
             }
         }
-        .toolbar(.hidden, for: .navigationBar)
+    }
+
+    @ViewBuilder
+    private func contentView(detail: PortfolioDetailResponse) -> some View {
+        VStack(spacing: 0) {
+
+            // ── Navigation Bar ──────────────────────────────────────
+            PDNavBar(
+                detail: detail,
+                onBack: onBack ?? { dismiss() },
+                onEdit: { /* TODO: portföy düzenle */ },
+                onDelete: { /* TODO: portföy sil */ }
+            )
+
+            ScrollView {
+                VStack(spacing: 0) {
+
+                    // ── Green stats strip ───────────────────────────
+                    PDStatsStrip(
+                        dailyReturn: detail.dailyReturn,
+                        totalReturn: detail.totalReturn
+                    )
+
+                    // ── 100 Liram Ne Oldu? ──────────────────────────
+                    pdSectionDivider
+                    PDPerformanceSection(
+                        performance: detail.performance,
+                        isNegativeReturn: detail.dailyReturn < 0
+                    )
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 12)
+
+                    // ── Portföy Ağırlıkları ─────────────────────────
+                    pdSectionDivider
+                    PDWeightsSection(weights: detail.weights)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 12)
+
+                    // ── Açık Pozisyonlar ────────────────────────────
+                    pdSectionDivider
+                    PDOpenPositionsSection(positions: detail.openPositions)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 12)
+                }
+                .padding(.bottom, 32)
+            }
+            .background(Color(.systemBackground))
+        }
     }
 
     private var pdSectionDivider: some View {
@@ -215,6 +248,7 @@ private struct PDStatsStrip: View {
 
 private struct PDPerformanceSection: View {
     let performance: PortfolioPerformance
+    let isNegativeReturn: Bool
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -235,6 +269,8 @@ private struct PDPerformanceSection: View {
         let count = values.count
         let minVal = values.min() ?? 95.0
         let indices = Array(0..<count)
+        
+        let chartColor: Color = isNegativeReturn ? .red : .midGreen
 
         return Chart {
             ForEach(indices, id: \.self) { i in
@@ -242,7 +278,7 @@ private struct PDPerformanceSection: View {
                     x: .value("Index", i),
                     y: .value("Değer", values[i])
                 )
-                .foregroundStyle(Color.midGreen)
+                .foregroundStyle(chartColor)
                 .interpolationMethod(.catmullRom)
 
                 AreaMark(
@@ -253,8 +289,8 @@ private struct PDPerformanceSection: View {
                 .foregroundStyle(
                     LinearGradient(
                         gradient: Gradient(colors: [
-                            Color.midGreen.opacity(0.35),
-                            Color.midGreen.opacity(0.05)
+                            chartColor.opacity(0.35),
+                            chartColor.opacity(0.05)
                         ]),
                         startPoint: .top,
                         endPoint: .bottom
@@ -865,7 +901,7 @@ struct PortfolioDetailLoaderView: View {
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else if let detail = vm.detail {
-                PortfolioDetailView(detail: detail, onBack: { dismiss() })
+                PortfolioDetailView(portfolioId: portfolioId, onBack: { dismiss() })
             } else {
                 VStack(spacing: 16) {
                     Text(vm.errorMessage ?? "Bir hata oluştu.")
@@ -924,5 +960,5 @@ private final class PortfolioDetailLoaderVM: ObservableObject {
 // MARK: - Preview
 
 #Preview {
-    PortfolioDetailView(detail: .mock, onBack: {})
+    PortfolioDetailView(portfolioId: 1, onBack: {})
 }

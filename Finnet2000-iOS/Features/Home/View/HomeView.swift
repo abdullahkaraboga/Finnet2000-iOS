@@ -306,7 +306,7 @@ struct RoboSepetlerView: View {
         HStack(spacing: 12) {
           ForEach(portfolios) { portfolio in
             NavigationLink {
-              RoboSepetDetailView(detail: .mock)
+              RoboSepetDetailView(portfolioId: portfolio.portfolioId)
             } label: {
               RoboSepetCardView(portfolio: portfolio)
             }

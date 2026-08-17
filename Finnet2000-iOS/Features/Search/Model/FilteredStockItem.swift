@@ -14,12 +14,12 @@ struct FilteredStockItem: Decodable, Identifiable, Sendable {
 
     nonisolated init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
-        code     = try c.decode(String.self, forKey: .code)
-        logoPath = try c.decode(String.self, forKey: .logoPath)
-        name     = try c.decode(String.self, forKey: .name)
-        date     = try c.decode(String.self, forKey: .date)
-        value    = try c.decode(Double.self, forKey: .value)
-        price    = try c.decode(Double.self, forKey: .price)
+        code     = try c.decodeIfPresent(String.self, forKey: .code) ?? ""
+        logoPath = try c.decodeIfPresent(String.self, forKey: .logoPath) ?? ""
+        name     = try c.decodeIfPresent(String.self, forKey: .name) ?? ""
+        date     = try c.decodeIfPresent(String.self, forKey: .date) ?? ""
+        value    = try c.decodeIfPresent(Double.self, forKey: .value) ?? 0.0
+        price    = try c.decodeIfPresent(Double.self, forKey: .price) ?? 0.0
     }
 
     private enum CodingKeys: String, CodingKey {
