@@ -420,23 +420,53 @@ struct StockDetailView: View {
 
     @ViewBuilder
     private var sektorelAnalizContent: some View {
-        if selectedSubTab == "Oranlar" {
-            sektorOranlarView
-        } else if selectedSubTab == "Getiri" {
-            sektorGetiriView
+        if viewModel.isLoading {
+            ProgressView("Yükleniyor...")
+                .frame(maxWidth: .infinity, alignment: .center)
+                .padding(.top, 50)
+        } else if viewModel.errorMessage != nil && viewModel.sectoralAnalysisData == nil {
+            ContentUnavailableView(
+                "Yüklenemedi",
+                systemImage: "exclamationmark.triangle",
+                description: Text(viewModel.errorMessage ?? "Sektörel analiz yüklenirken hata oluştu.")
+            )
         } else {
-            sektorFinansallarView
+            if selectedSubTab == "Oranlar" {
+                sektorOranlarView
+            } else if selectedSubTab == "Getiri" {
+                sektorGetiriView
+            } else {
+                sektorFinansallarView
+            }
         }
     }
 
     private var sektorFinansallarView: some View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: 22) {
-                sectionCard("Sektörel Finansal Karşılaştırma") {
-                    sdMetricsTable(
-                        headers: ["Kalem", "KTLEV", "Sektör", "XU100"],
-                        rows: SDData.sektorFinansallarRows
-                    )
+                if let data = viewModel.sectoralAnalysisData?.financials {
+                    let bilanco = viewModel.buildSectoralTable(from: data.balanceSheet, isCurrency: true)
+                    if !bilanco.rows.isEmpty {
+                        sectionCard("Bilanço") {
+                            sdMetricsTable(headers: bilanco.headers, rows: bilanco.rows, firstColWidth: 45)
+                        }
+                    }
+                    
+                    let gelirTablosu = viewModel.buildSectoralTable(from: data.incomeStatement, isCurrency: true)
+                    if !gelirTablosu.rows.isEmpty {
+                        sectionCard("Gelir Tablosu") {
+                            sdMetricsTable(headers: gelirTablosu.headers, rows: gelirTablosu.rows, firstColWidth: 45)
+                        }
+                    }
+                    
+                    let nakitAkim = viewModel.buildSectoralTable(from: data.cashFlowStatement, isCurrency: true)
+                    if !nakitAkim.rows.isEmpty {
+                        sectionCard("Nakit Akım") {
+                            sdMetricsTable(headers: nakitAkim.headers, rows: nakitAkim.rows, firstColWidth: 45)
+                        }
+                    }
+                } else {
+                    ContentUnavailableView("Veri Bulunamadı", systemImage: "tray")
                 }
             }
             .padding(.horizontal, 12)
@@ -449,11 +479,17 @@ struct StockDetailView: View {
     private var sektorOranlarView: some View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: 22) {
-                sectionCard("Sektörel Oran Karşılaştırması") {
-                    sdMetricsTable(
-                        headers: ["Oran", "KTLEV", "Sektör", "XU100"],
-                        rows: SDData.sektorOranlarRows
-                    )
+                if let ratios = viewModel.sectoralAnalysisData?.ratios {
+                    let table = viewModel.buildSectoralTable(from: ratios)
+                    if !table.rows.isEmpty {
+                        sectionCard("Sektörel Oranlar") {
+                            sdMetricsTable(headers: table.headers, rows: table.rows, firstColWidth: 45)
+                        }
+                    } else {
+                        ContentUnavailableView("Veri Bulunamadı", systemImage: "tray")
+                    }
+                } else {
+                    ContentUnavailableView("Veri Bulunamadı", systemImage: "tray")
                 }
             }
             .padding(.horizontal, 12)
@@ -466,11 +502,17 @@ struct StockDetailView: View {
     private var sektorGetiriView: some View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: 22) {
-                sectionCard("Getiri Karşılaştırması") {
-                    sdMetricsTable(
-                        headers: ["", "Günlük", "Aylık", "3 Aylık", "Yıllık"],
-                        rows: SDData.sektorGetiriRows
-                    )
+                if let returns = viewModel.sectoralAnalysisData?.returns {
+                    let table = viewModel.buildSectoralTable(from: returns)
+                    if !table.rows.isEmpty {
+                        sectionCard("Sektörel Getiriler") {
+                            sdMetricsTable(headers: table.headers, rows: table.rows, firstColWidth: 45)
+                        }
+                    } else {
+                        ContentUnavailableView("Veri Bulunamadı", systemImage: "tray")
+                    }
+                } else {
+                    ContentUnavailableView("Veri Bulunamadı", systemImage: "tray")
                 }
             }
             .padding(.horizontal, 12)
@@ -559,38 +601,89 @@ struct StockDetailView: View {
     }
 
     @ViewBuilder
-    private func sdMetricsTable(headers: [String], rows: [[String]]) -> some View {
-        VStack(spacing: 0) {
-            HStack(spacing: 0) {
-                ForEach(headers.indices, id: \.self) { i in
-                    Text(headers[i])
-                        .font(.system(size: 11, weight: .semibold))
-                        .foregroundStyle(Color.secondary)
-                        .frame(maxWidth: .infinity, alignment: i == 0 ? .leading : .center)
+    private func sdMetricsTable(headers: [String], rows: [[String]], firstColWidth: CGFloat = 100) -> some View {
+        let colWidth: CGFloat = 90
+        let rowHeight: CGFloat = 44
+        
+        HStack(spacing: 0) {
+            // FIXED FIRST COLUMN
+            VStack(spacing: 0) {
+                // Header
+                Text(headers.isEmpty ? "" : headers[0])
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(Color.secondary)
+                    .multilineTextAlignment(.leading)
+                    .lineLimit(2)
+                    .truncationMode(.tail)
+                    .frame(width: firstColWidth, alignment: .leading)
+                    .frame(height: 32, alignment: .bottom)
+                    .padding(.bottom, 10)
+                
+                Divider()
+                
+                // Rows
+                ForEach(rows.indices, id: \.self) { ri in
+                    let val = rows[ri].isEmpty ? "" : rows[ri][0]
+                    Text(val)
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(sdCellColor(val, col: 0))
+                        .frame(width: firstColWidth, alignment: .leading)
+                        .frame(height: rowHeight)
                         .minimumScaleFactor(0.7)
-                        .lineLimit(1)
+                        .lineLimit(2)
+                    
+                    if ri < rows.count - 1 { Divider() }
                 }
             }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 9)
-            Divider().padding(.horizontal, 12)
-            ForEach(rows.indices, id: \.self) { ri in
-                HStack(spacing: 0) {
-                    ForEach(rows[ri].indices, id: \.self) { ci in
-                        let val = rows[ri][ci]
-                        Text(val)
-                            .font(.system(size: ci == 0 ? 12 : 11, weight: ci == 0 ? .semibold : .regular))
-                            .foregroundStyle(sdCellColor(val, col: ci))
-                            .frame(maxWidth: .infinity, alignment: ci == 0 ? .leading : .center)
-                            .minimumScaleFactor(0.7)
-                            .multilineTextAlignment(.center)
+            .padding(.leading, 12)
+            
+            // SCROLLABLE REST OF THE COLUMNS
+            ScrollView(.horizontal, showsIndicators: false) {
+                VStack(alignment: .leading, spacing: 0) {
+                    // Header Row
+                    HStack(spacing: 4) {
+                        if headers.count > 1 {
+                            ForEach(1..<headers.count, id: \.self) { ci in
+                                Text(headers[ci])
+                                    .font(.system(size: 11, weight: .semibold))
+                                    .foregroundStyle(Color.secondary)
+                                    .multilineTextAlignment(.center)
+                                    .lineLimit(2)
+                                    .truncationMode(.tail)
+                                    .frame(width: colWidth, alignment: .center)
+                                    .frame(height: 32, alignment: .bottom)
+                            }
+                        }
+                    }
+                    .padding(.bottom, 10)
+                    .padding(.trailing, 12)
+                    
+                    Divider()
+                    
+                    // Value Rows
+                    ForEach(rows.indices, id: \.self) { ri in
+                        HStack(spacing: 4) {
+                            if rows[ri].count > 1 {
+                                ForEach(1..<rows[ri].count, id: \.self) { ci in
+                                    let val = rows[ri][ci]
+                                    Text(val)
+                                        .font(.system(size: 11, weight: .regular))
+                                        .foregroundStyle(sdCellColor(val, col: ci))
+                                        .frame(width: colWidth, alignment: .center)
+                                        .frame(height: rowHeight)
+                                        .minimumScaleFactor(0.7)
+                                        .lineLimit(1)
+                                }
+                            }
+                        }
+                        .padding(.trailing, 12)
+                        
+                        if ri < rows.count - 1 { Divider() }
                     }
                 }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 11)
-                if ri < rows.count - 1 { Divider().padding(.horizontal, 12) }
             }
         }
+        .padding(.vertical, 4)
     }
 
     private func sdCellColor(_ val: String, col: Int) -> Color {
@@ -777,28 +870,7 @@ private enum SDData {
         ("Dönem Sonu Nakit", ["0,4Mi", "1,2Mi", "1,8Mi", "2,6Mi", "3,4Mi"])
     ]
 
-    // Sektörel Analiz
-    static let sektorFinansallarRows: [[String]] = [
-        ["Net Kar Marjı",    "%25,0", "%18,4", "%22,1"],
-        ["FAVÖK Marjı",      "%36,9", "%28,7", "%31,2"],
-        ["Brüt Kar Marjı",   "%46,4", "%38,2", "%40,5"],
-        ["Cari Oran",        "2,14",  "1,68",  "1,82"],
-        ["Özkaynak / Varlık", "%68,1", "%54,3", "%58,7"]
-    ]
-
-    static let sektorOranlarRows: [[String]] = [
-        ["F/K",      "26,53", "18,40", "14,20"],
-        ["PD/DD",    "30,15", "8,70",  "6,30"],
-        ["FD/FAVÖK", "16,42", "12,30", "11,80"],
-        ["Cari Oran", "2,14", "1,68",  "1,82"],
-        ["ROE",      "%16,9", "%14,2", "%15,8"]
-    ]
-
-    static let sektorGetiriRows: [[String]] = [
-        ["KTLEV",       "%4,44",  "%60,87", "%82,35",  "%220,45"],
-        ["Sektör Ort.", "%0,82",  "%15,20", "%28,40",  "%85,60"],
-        ["XU100",       "%-0,13", "%12,70", "%22,50",  "%55,14"]
-    ]
+    // Sektörel Analiz mocks removed
 }
 
 // MARK: - Radar Chart

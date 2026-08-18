@@ -62,4 +62,32 @@ final class StockDetailService {
                 }
             }
     }
+
+    func fetchSectoralAnalysis(
+        stockCode: String,
+        completion: @escaping (Result<StockDetailSectoralAnalysisData, AFError>) -> Void
+    ) {
+        let url = "\(baseURL)/SectoralAnalysis"
+        NetworkManager.shared.authedSession
+            .request(url, method: .get, parameters: ["stockCode": stockCode])
+            .validate(statusCode: 200..<300)
+            .responseData { response in
+                switch response.result {
+                case .success(let data):
+                    do {
+                        let root = try JSONDecoder().decode(StockDetailSectoralAnalysisResponse.self, from: data)
+                        if let detailData = root.data {
+                            completion(.success(detailData))
+                        } else {
+                            let error = NSError(domain: "StockDetailService", code: -1, userInfo: [NSLocalizedDescriptionKey: "Data field is null"])
+                            completion(.failure(.responseSerializationFailed(reason: .customSerializationFailed(error: error))))
+                        }
+                    } catch {
+                        completion(.failure(.responseSerializationFailed(reason: .decodingFailed(error: error))))
+                    }
+                case .failure(let error):
+                    completion(.failure(error))
+                }
+            }
+    }
 }

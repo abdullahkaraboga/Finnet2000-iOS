@@ -6,6 +6,7 @@ import Combine
 final class StockDetailViewModel: ObservableObject {
     @Published var data: StockDetailData?
     @Published var ratiosData: StockDetailRatiosData?
+    @Published var sectoralAnalysisData: StockDetailSectoralAnalysisData?
     @Published var isLoading: Bool = false
     @Published var errorMessage: String? = nil
     
@@ -27,13 +28,27 @@ final class StockDetailViewModel: ObservableObject {
                 // Fetch ratios after summary
                 StockDetailService.shared.fetchRatios(stockCode: stockCode) { ratiosResult in
                     Task {
-                        self.isLoading = false
                         switch ratiosResult {
                         case .success(let ratiosData):
                             self.ratiosData = ratiosData
                         case .failure(let error):
                             if self.errorMessage == nil {
                                 self.errorMessage = error.localizedDescription
+                            }
+                        }
+                        
+                        // Fetch sectoral analysis after ratios
+                        StockDetailService.shared.fetchSectoralAnalysis(stockCode: stockCode) { sectoralResult in
+                            Task {
+                                self.isLoading = false
+                                switch sectoralResult {
+                                case .success(let sectoralData):
+                                    self.sectoralAnalysisData = sectoralData
+                                case .failure(let error):
+                                    if self.errorMessage == nil {
+                                        self.errorMessage = error.localizedDescription
+                                    }
+                                }
                             }
                         }
                     }
@@ -271,5 +286,59 @@ final class StockDetailViewModel: ObservableObject {
         }
         
         return result
+    }
+    
+    // MARK: - Sectoral Analysis Data Formatting
+    
+    func buildSectoralTable(from dict: [String: [SectoralItem]]?, isCurrency: Bool = false) -> (headers: [String], rows: [[String]]) {
+        guard let dict = dict, !dict.isEmpty else { return ([], []) }
+        
+        let columnKeys = dict.keys.sorted()
+        
+        var stockNames: [String] = []
+        if let firstRow = dict.values.first {
+            stockNames = firstRow.compactMap { $0.name }
+        }
+        
+        var headers = ["Hisse"]
+        headers.append(contentsOf: columnKeys)
+        
+        var rows: [[String]] = []
+        
+        for stockName in stockNames {
+            var row = [stockName]
+            for key in columnKeys {
+                if let items = dict[key], let item = items.first(where: { $0.name == stockName }) {
+                    let val = item.value ?? 0
+                    let isPct = item.isPercentage == true
+                    
+                    var formattedVal = ""
+                    let valStr = String(format: "%.2f", abs(val)).replacingOccurrences(of: ".", with: ",")
+                    
+                    if isPct {
+                        let sign = val >= 0 ? "%" : "%-"
+                        formattedVal = "\(sign)\(valStr)"
+                    } else if abs(val) >= 1_000_000_000 {
+                        let shortValStr = String(format: "%.2f", abs(val) / 1_000_000_000).replacingOccurrences(of: ".", with: ",")
+                        formattedVal = "\(val < 0 ? "-" : "")\(shortValStr)Mr"
+                        if isCurrency { formattedVal += " ₺" }
+                    } else if abs(val) >= 1_000_000 {
+                        let shortValStr = String(format: "%.2f", abs(val) / 1_000_000).replacingOccurrences(of: ".", with: ",")
+                        formattedVal = "\(val < 0 ? "-" : "")\(shortValStr)Mi"
+                        if isCurrency { formattedVal += " ₺" }
+                    } else {
+                        formattedVal = "\(val < 0 ? "-" : "")\(valStr)"
+                        if isCurrency { formattedVal += "₺" }
+                    }
+                    
+                    row.append(formattedVal)
+                } else {
+                    row.append("-")
+                }
+            }
+            rows.append(row)
+        }
+        
+        return (headers, rows)
     }
 }
