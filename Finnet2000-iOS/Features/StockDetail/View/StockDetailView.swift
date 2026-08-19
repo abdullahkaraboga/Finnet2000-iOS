@@ -11,6 +11,14 @@ struct StockDetailView: View {
     @State private var showAlarm = false
     @State private var navigateToMatriksBridge = false
 
+    // MARK: - Filter States for Finansallar
+    @State private var bilancoDonem = "Yıllık"
+    @State private var bilancoAnaliz = "Mutlak"
+    @State private var gelirDonem = "Kümülatif"
+    @State private var gelirAnaliz = "Mutlak"
+    @State private var nakitDonem = "Kümülatif"
+    @State private var nakitAnaliz = "Mutlak"
+
     private let tabs = ["Özet", "Finansallar", "Oranlar", "Sektörel Analiz"]
     private let subTabs: [String: [String]] = [
         "Finansallar":     ["Bilanço", "Gelir Tablosu", "Nakit Akım"],
@@ -337,6 +345,13 @@ struct StockDetailView: View {
     private var bilancoView: some View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: 22) {
+                finansallarDropdowns(
+                    donemSelection: $bilancoDonem,
+                    donemOptions: ["Yıllık", "Çeyreklik"],
+                    analizSelection: $bilancoAnaliz,
+                    analizOptions: ["Dikey Analiz", "Mutlak", "Yatay Analiz"]
+                )
+                
                 sectionCard("Bilanço") {
                     sdFinancialTable(periods: SDData.financialPeriods, rows: SDData.bilancoRows)
                 }
@@ -351,6 +366,13 @@ struct StockDetailView: View {
     private var gelirTablosuView: some View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: 22) {
+                finansallarDropdowns(
+                    donemSelection: $gelirDonem,
+                    donemOptions: ["Kümülatif", "Çeyreklik", "Yıllıklandırılmış"],
+                    analizSelection: $gelirAnaliz,
+                    analizOptions: ["Mutlak", "Yatay Analiz"]
+                )
+                
                 sectionCard("Gelir Tablosu") {
                     sdFinancialTable(periods: SDData.financialPeriods, rows: SDData.gelirTablosuRows)
                 }
@@ -365,6 +387,13 @@ struct StockDetailView: View {
     private var nakitAkimView: some View {
         ScrollView(showsIndicators: false) {
             VStack(alignment: .leading, spacing: 22) {
+                finansallarDropdowns(
+                    donemSelection: $nakitDonem,
+                    donemOptions: ["Kümülatif", "Çeyreklik", "Yıllıklandırılmış"],
+                    analizSelection: $nakitAnaliz,
+                    analizOptions: ["Mutlak", "Yatay Analiz"]
+                )
+                
                 sectionCard("Nakit Akım") {
                     sdFinancialTable(periods: SDData.annualPeriods, rows: SDData.nakitAkimRows)
                 }
@@ -523,6 +552,69 @@ struct StockDetailView: View {
     }
 
     // MARK: - Helpers
+
+    @ViewBuilder
+    private func finansallarDropdowns(
+        donemSelection: Binding<String>,
+        donemOptions: [String],
+        analizSelection: Binding<String>,
+        analizOptions: [String]
+    ) -> some View {
+        HStack(spacing: 12) {
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Dönem")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(Color.secondary)
+                Menu {
+                    ForEach(donemOptions, id: \.self) { option in
+                        Button(option) { donemSelection.wrappedValue = option }
+                    }
+                } label: {
+                    HStack {
+                        Text(donemSelection.wrappedValue)
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundColor(.primary)
+                        Spacer()
+                        Image(systemName: "chevron.down")
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundColor(Color.sdGreen)
+                    }
+                    .padding(.horizontal, 12)
+                    .frame(height: 44)
+                    .background(Color.sdPrimaryBackground, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                }
+            }
+            
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Analiz")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(Color.secondary)
+                Menu {
+                    ForEach(analizOptions, id: \.self) { option in
+                        Button(option) { analizSelection.wrappedValue = option }
+                    }
+                } label: {
+                    HStack {
+                        Text(analizSelection.wrappedValue)
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundColor(.primary)
+                        Spacer()
+                        Image(systemName: "chevron.down")
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundColor(Color.sdGreen)
+                    }
+                    .padding(.horizontal, 12)
+                    .frame(height: 44)
+                    .background(Color.sdPrimaryBackground, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                }
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 16)
+        .background(Color.secondary.opacity(0.06), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .padding(.horizontal, 12)
+        .padding(.top, 16)
+    }
 
     @ViewBuilder
     private func sdFinancialTable(periods: [String], rows: [(String, [String])]) -> some View {

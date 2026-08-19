@@ -36,6 +36,7 @@ struct FinancialSectorGroup: Identifiable {
 
 struct SectoralAnalysisView: View {
     @Environment(\.dismiss) private var dismiss
+    @StateObject private var viewModel = SectoralAnalysisViewModel()
     @State private var selectedTab: SATab = .genelBakis
     @State private var sortCol: SortCol = .aktifKarlilik
     @State private var ascending = true
@@ -109,7 +110,7 @@ struct SectoralAnalysisView: View {
     }
 
     private var sortedRows: [SectorRow] {
-        SAMockData.rows.sorted {
+        viewModel.sectors.sorted {
             switch sortCol {
             case .sektor:        return ascending ? $0.sektor < $1.sektor : $0.sektor > $1.sektor
             case .aktifKarlilik: return ascending ? $0.aktifKarlilik < $1.aktifKarlilik : $0.aktifKarlilik > $1.aktifKarlilik
@@ -136,6 +137,17 @@ struct SectoralAnalysisView: View {
         .navigationBarTitleDisplayMode(.inline)
         .transparentNavigationBar()
         .background(Color(.systemBackground).ignoresSafeArea())
+        .onAppear {
+            viewModel.loadSectors()
+        }
+        .overlay {
+            if viewModel.isLoading {
+                ProgressView()
+                    .scaleEffect(1.5)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(Color(.systemBackground).opacity(0.3))
+            }
+        }
     }
 
     // MARK: - Tab Bar
@@ -652,38 +664,7 @@ struct SectoralAnalysisView: View {
 
 // MARK: - Mock Data
 
-private enum SAMockData {
-    static let rows: [SectorRow] = [
-        //                                                                                              ROIC     Özs.Krl.   F/K
-        SectorRow(sektor: "Kırtasiye",                   aktifKarlilik: 0,    pdDd: 0.00,  fdFavok: 0.00,   roic: 0,     ozserKarlilik: 0,     fiyatKazanc: 0.00),
-        SectorRow(sektor: "Dayanıklı Tüketim",           aktifKarlilik: 0,    pdDd: 1.32,  fdFavok: 12.03,  roic: 0,     ozserKarlilik: 0,     fiyatKazanc: 18.40),
-        SectorRow(sektor: "Medya",                       aktifKarlilik: 0,    pdDd: 1.43,  fdFavok: 0.00,   roic: 0,     ozserKarlilik: 0,     fiyatKazanc: 0.00),
-        SectorRow(sektor: "Menkul Kıymet Yat. Ort.",     aktifKarlilik: 0,    pdDd: 1.83,  fdFavok: 3.30,   roic: 0,     ozserKarlilik: 0,     fiyatKazanc: 14.25),
-        SectorRow(sektor: "Finansman Şirketleri",        aktifKarlilik: 0,    pdDd: 0.00,  fdFavok: 15.84,  roic: 0,     ozserKarlilik: 0,     fiyatKazanc: 0.00),
-        SectorRow(sektor: "Girişim Sermayesi Yat. Ort.", aktifKarlilik: 0.28, pdDd: 0.82,  fdFavok: 7.05,   roic: 3.40,  ozserKarlilik: 4.20,  fiyatKazanc: 11.80),
-        SectorRow(sektor: "Metal Ana Sanayi",            aktifKarlilik: 0.36, pdDd: 1.16,  fdFavok: 12.14,  roic: 4.50,  ozserKarlilik: 6.10,  fiyatKazanc: 8.45),
-        SectorRow(sektor: "Çimento, Beton",              aktifKarlilik: 0.39, pdDd: 1.96,  fdFavok: 12.96,  roic: 5.20,  ozserKarlilik: 7.80,  fiyatKazanc: 10.20),
-        SectorRow(sektor: "Cam",                         aktifKarlilik: 0.40, pdDd: 0.57,  fdFavok: 13.68,  roic: 4.80,  ozserKarlilik: 5.60,  fiyatKazanc: 7.35),
-        SectorRow(sektor: "Toptan Ticaret",              aktifKarlilik: 0.42, pdDd: 1.38,  fdFavok: 24.50,  roic: 5.60,  ozserKarlilik: 8.40,  fiyatKazanc: 12.70),
-        SectorRow(sektor: "Diğer İmalat",                aktifKarlilik: 0.45, pdDd: 0.90,  fdFavok: 6.48,   roic: 5.90,  ozserKarlilik: 7.20,  fiyatKazanc: 9.85),
-        SectorRow(sektor: "Yatırım Şirketleri",          aktifKarlilik: 0.49, pdDd: 1.55,  fdFavok: 1.02,   roic: 6.10,  ozserKarlilik: 8.90,  fiyatKazanc: 15.60),
-        SectorRow(sektor: "Ulaştırma",                   aktifKarlilik: 0.53, pdDd: 0.68,  fdFavok: 6.12,   roic: 6.80,  ozserKarlilik: 9.40,  fiyatKazanc: 8.90),
-        SectorRow(sektor: "Banka",                       aktifKarlilik: 0.62, pdDd: 1.14,  fdFavok: 5.70,   roic: 8.20,  ozserKarlilik: 16.50, fiyatKazanc: 6.85),
-        SectorRow(sektor: "Giyim Eşyası",                aktifKarlilik: 0.63, pdDd: 2.25,  fdFavok: 4.49,   roic: 8.40,  ozserKarlilik: 11.20, fiyatKazanc: 14.30),
-        SectorRow(sektor: "Petrol",                      aktifKarlilik: 0.64, pdDd: 1.32,  fdFavok: 6.77,   roic: 8.80,  ozserKarlilik: 12.60, fiyatKazanc: 9.40),
-        SectorRow(sektor: "Tekstil Ürünleri",            aktifKarlilik: 0.65, pdDd: 0.74,  fdFavok: 10.87,  roic: 7.90,  ozserKarlilik: 10.80, fiyatKazanc: 11.25),
-        SectorRow(sektor: "Tekstil",                     aktifKarlilik: 0.67, pdDd: 1.28,  fdFavok: 8.45,   roic: 8.20,  ozserKarlilik: 11.40, fiyatKazanc: 10.60),
-        SectorRow(sektor: "Perakende",                   aktifKarlilik: 0.72, pdDd: 3.14,  fdFavok: 18.30,  roic: 9.40,  ozserKarlilik: 18.20, fiyatKazanc: 22.40),
-        SectorRow(sektor: "Teknoloji",                   aktifKarlilik: 0.84, pdDd: 4.22,  fdFavok: 22.60,  roic: 12.50, ozserKarlilik: 22.40, fiyatKazanc: 28.60),
-        SectorRow(sektor: "İlaç",                        aktifKarlilik: 0.91, pdDd: 2.87,  fdFavok: 16.40,  roic: 14.20, ozserKarlilik: 19.80, fiyatKazanc: 20.15),
-        SectorRow(sektor: "Elektrik",                    aktifKarlilik: 0.95, pdDd: 1.68,  fdFavok: 9.22,   roic: 11.40, ozserKarlilik: 14.60, fiyatKazanc: 12.85),
-        SectorRow(sektor: "Gıda",                        aktifKarlilik: 1.02, pdDd: 1.90,  fdFavok: 11.85,  roic: 13.20, ozserKarlilik: 17.40, fiyatKazanc: 16.70),
-        SectorRow(sektor: "Sigortacılık",                aktifKarlilik: 1.15, pdDd: 2.10,  fdFavok: 0.00,   roic: 0,     ozserKarlilik: 15.60, fiyatKazanc: 10.40),
-        SectorRow(sektor: "Holding ve Yatırım",          aktifKarlilik: 1.23, pdDd: 1.47,  fdFavok: 14.22,  roic: 10.80, ozserKarlilik: 16.20, fiyatKazanc: 13.50),
-        SectorRow(sektor: "Kimya",                       aktifKarlilik: 1.38, pdDd: 2.63,  fdFavok: 8.90,   roic: 16.40, ozserKarlilik: 21.30, fiyatKazanc: 17.80),
-        SectorRow(sektor: "İnşaat",                      aktifKarlilik: 1.45, pdDd: 1.10,  fdFavok: 17.30,  roic: 14.60, ozserKarlilik: 18.40, fiyatKazanc: 11.25),
-    ]
-}
+// Mock Data for SectoralAnalysizView was removed since it is now populated via API
 
 // MARK: - Financial Sector Group Mock Data
 
