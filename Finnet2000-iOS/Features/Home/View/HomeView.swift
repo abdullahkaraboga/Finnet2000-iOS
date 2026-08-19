@@ -242,17 +242,19 @@ private struct TickerGridView: View {
   }
 
   var body: some View {
-    VStack(spacing: 0) {
+    VStack(spacing: 8) {
       ForEach(Array(rows.enumerated()), id: \.offset) { rowIdx, row in
-        HStack(spacing: 0) {
+        HStack(spacing: 8) {
           ForEach(row, id: \.self) { code in
             LiveTickerItemView(code: code, data: liveStocks[code])
               .frame(maxWidth: .infinity)
           }
         }
-        .background(Color(.systemGray5) )
       }
     }
+    .padding(.horizontal, 16)
+    .padding(.vertical, 16)
+    .background(Color(.systemGray6))
   }
 }
 
@@ -274,23 +276,37 @@ private struct LiveTickerItemView: View {
   private var trendColor: Color { isUp ? .midGreen : Color.red }
 
   var body: some View {
-    VStack(alignment: .leading, spacing: 4) {
+    VStack(spacing: 0) {
+      // Header Area
       Text(code)
         .font(.system(size: 11, weight: .bold))
-        .foregroundColor(.white)
-      HStack(spacing: 3) {
-        Image(systemName: isUp ? "arrowtriangle.up.fill" : "arrowtriangle.down.fill")
-          .font(.system(size: 8))
-          .foregroundColor(trendColor)
+        .foregroundColor(.primary)
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 8)
+        .background(Color.primary.opacity(0.03))
+      
+      // Values Area
+      VStack(spacing: 6) {
         Text(displayPrice)
-          .font(.system(size: 11))
-          .foregroundColor(.white)
+          .font(.system(size: 13, weight: .bold))
+          .foregroundColor(.primary)
           .lineLimit(1)
           .minimumScaleFactor(0.7)
+          
+        HStack(spacing: 2) {
+          Image(systemName: isUp ? "arrowtriangle.up.fill" : "arrowtriangle.down.fill")
+            .font(.system(size: 8))
+          Text(String(format: "%.2f%%", abs(change)))
+            .font(.system(size: 11, weight: .semibold))
+        }
+        .foregroundColor(trendColor)
       }
+      .padding(.vertical, 10)
+      .frame(maxWidth: .infinity)
+      .background(Color(.systemBackground))
     }
-    .padding(.horizontal, 8)
-    .padding(.vertical, 10)
+    .clipShape(RoundedRectangle(cornerRadius: 8))
+    .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
   }
 }
 
