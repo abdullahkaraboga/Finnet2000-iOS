@@ -15,21 +15,15 @@ struct SectorRow: Identifiable {
 
 // MARK: - Financial Stock Models
 
-struct FinancialStock: Identifiable {
-    let id = UUID()
-    let code: String
-    let donenVarliklar: Double
-    let duranVarliklar: Double
-    let toplamVarliklar: Double
-    let kisaVadeliYuk: Double
-    let uzunVadeliYuk: Double
-    let ozkaynaklar: Double
+struct IndicatorValue {
+    let value: Double
+    let isPercentage: Bool?
 }
 
-struct FinancialSectorGroup: Identifiable {
+struct DynamicFinancialStock: Identifiable {
     let id = UUID()
-    let name: String
-    let stocks: [FinancialStock]
+    let code: String
+    var values: [String: IndicatorValue]
 }
 
 // MARK: - SectoralAnalysisView
@@ -45,13 +39,17 @@ struct SectoralAnalysisView: View {
     // Sektörel Analiz tab state
     @State private var saSubTab: SASubTab = .finansallar
     @State private var finSubTab: FinSubTab = .bilanco
-    @State private var selectedGroupIndex: Int = 0
+    @State private var selectedSector: SectorListItem?
     @State private var showingSectorPicker: Bool = false
     @State private var sectorSearchText: String = ""
     @State private var sHOffset: CGFloat = 0
     @State private var sHOffsetAtStart: CGFloat = 0
-    @State private var stockSortCol: StockSortCol = .donenVarliklar
+    @State private var dynamicSortCol: String? = nil
     @State private var stockSortAscending: Bool = true
+    
+    @State private var oranlarSubTab: OranlarSubTab = .likidite
+    @State private var getiriRiskSubTab: GetiriRiskSubTab = .getiri
+    @State private var teknikSubTab: TeknikSubTab = .indikatorler
 
     enum SATab: String, CaseIterable {
         case genelBakis     = "Genel Bakış"
@@ -67,6 +65,7 @@ struct SectoralAnalysisView: View {
         case oranlar      = "Oranlar"
         case getiriRisk   = "Getiri & Risk"
         case teknikAnaliz = "Teknik Analiz"
+        case degerleme    = "Değerleme"
     }
 
     enum FinSubTab: String, CaseIterable {
@@ -74,10 +73,29 @@ struct SectoralAnalysisView: View {
         case gelirTablosu = "Gelir Tablosu"
         case nakitAkim    = "Nakit Akım"
     }
-
-    enum StockSortCol {
-        case donenVarliklar, duranVarliklar, toplamVarliklar, kisaVadeliYuk, uzunVadeliYuk, ozkaynaklar
+    
+    enum OranlarSubTab: String, CaseIterable {
+        case likidite = "Likidite"
+        case karlilik = "Karlılık"
+        case maliyet = "Maliyet"
+        case piyasa = "Piyasa Çarpanları"
+        case buyume = "Büyüme"
+        case finansalYapi = "Finansal Yapı"
+        case faaliyet = "Faaliyet Etkinliği"
     }
+
+    enum GetiriRiskSubTab: String, CaseIterable {
+        case getiri = "Getiri"
+        case risk = "Risk"
+    }
+
+    enum TeknikSubTab: String, CaseIterable {
+        case indikatorler = "İndikatörler"
+        case destekDirenc = "Destek-Direnç Seviyeleri"
+        case betaZSkor = "Beta ve Z-Skor"
+    }
+
+
 
     // MARK: - Layout Constants
     private let sektorWidth: CGFloat    = 110
@@ -106,7 +124,57 @@ struct SectoralAnalysisView: View {
         UIScreen.main.bounds.width - hisseWidth
     }
     private var sMaxHOffset: CGFloat {
-        max(0, 6 * stockColW + 12 - sNumericVisible)
+        let colsCount = CGFloat(dynamicHeaders.count)
+        return max(0, colsCount * stockColW + 12 - sNumericVisible)
+    }
+    
+    private var dynamicHeaders: [String] {
+        return fetchedDynamicData.headers
+    }
+    
+    private var dynamicStocks: [DynamicFinancialStock] {
+        return fetchedDynamicData.stocks
+    }
+    
+    private var fetchedDynamicData: (headers: [String], stocks: [DynamicFinancialStock]) {
+        guard let detail = viewModel.sectorDetail else { return ([], []) }
+        
+        var tabData: [String: [SectorIndicator]]? = nil
+        
+        switch saSubTab {
+        case .finansallar:
+            tabData = detail.financials?[finSubTab.rawValue]
+        case .oranlar:
+            tabData = detail.ratios?[oranlarSubTab.rawValue]
+        case .getiriRisk:
+            if getiriRiskSubTab == .getiri {
+                tabData = detail.return
+            } else {
+                tabData = detail.risk
+            }
+        case .teknikAnaliz:
+            tabData = detail.technicalAnalysis?[teknikSubTab.rawValue]
+        case .degerleme:
+            tabData = detail.valuation
+        }
+        
+        guard let data = tabData else { return ([], []) }
+        
+        let headers = Array(data.keys).sorted()
+        var stocksDict: [String: DynamicFinancialStock] = [:]
+        
+        for code in detail.stockCodes {
+            stocksDict[code] = DynamicFinancialStock(code: code, values: [:])
+        }
+        
+        for (indicatorName, indicators) in data {
+            for ind in indicators {
+                stocksDict[ind.name]?.values[indicatorName] = IndicatorValue(value: ind.value ?? 0, isPercentage: ind.isPercentage)
+            }
+        }
+        
+        let stocks = stocksDict.values.sorted { $0.code < $1.code }
+        return (headers, stocks)
     }
 
     private var sortedRows: [SectorRow] {
@@ -322,78 +390,47 @@ struct SectoralAnalysisView: View {
 
     // MARK: - Sektörel Analiz Tab
 
+    private var filteredSectors: [SectorListItem] {
+        viewModel.sectorList.filter { sectorSearchText.isEmpty || $0.ad.localizedCaseInsensitiveContains(sectorSearchText) }
+    }
+
     private var sektorelAnalizTab: some View {
         VStack(spacing: 0) {
             saSubTabBar
-            switch saSubTab {
-            case .finansallar:               finansallarContent
-            case .oranlar, .getiriRisk, .teknikAnaliz: saPlaceholder
-            }
-        }
-    }
-
-    private var saSubTabBar: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 0) {
-                ForEach(SASubTab.allCases, id: \.self) { tab in
-                    Button {
-                        withAnimation(.easeInOut(duration: 0.2)) { saSubTab = tab }
-                    } label: {
-                        VStack(spacing: 0) {
-                            Text(tab.rawValue)
-                                .font(.system(size: 14, weight: saSubTab == tab ? .semibold : .regular))
-                                .foregroundColor(saSubTab == tab ? .primary : .secondary)
-                                .padding(.vertical, 12)
-                                .padding(.horizontal, 18)
-                            Rectangle()
-                                .fill(saSubTab == tab ? Color.midGreen : Color.clear)
-                                .frame(height: 2)
-                        }
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
-        }
-        .background(Color(.systemBackground))
-        .overlay(alignment: .bottom) { Divider() }
-    }
-
-    private var filteredBilanco: [(index: Int, group: FinancialSectorGroup)] {
-        SAGroupData.bilanco.enumerated()
-            .filter { sectorSearchText.isEmpty || $0.element.name.localizedCaseInsensitiveContains(sectorSearchText) }
-            .map { (index: $0.offset, group: $0.element) }
-    }
-
-    private var finansallarContent: some View {
-        VStack(spacing: 0) {
-            finSubTabBar
-
+            
             ZStack(alignment: .top) {
-                // Scrollable table
-                ScrollView(.vertical, showsIndicators: false) {
-                    VStack(spacing: 0) {
-                        Color.clear.frame(height: 54)
-                        Divider()
-                        stockTableHeader
-                        let stocks = sortedStocks(SAGroupData.bilanco[selectedGroupIndex].stocks)
-                        ForEach(Array(stocks.enumerated()), id: \.element.id) { idx, stock in
-                            Divider()
-                            stockTableRow(stock, idx: idx)
+                // Main content
+                VStack(spacing: 0) {
+                    // Space for dropdown selector
+                    Color.clear.frame(height: 54)
+                    
+                    switch saSubTab {
+                    case .finansallar:
+                        VStack(spacing: 0) {
+                            genericSubTabBar(selectedTab: $finSubTab)
+                            dynamicTableView
                         }
+                    case .oranlar:
+                        VStack(spacing: 0) {
+                            genericSubTabBar(selectedTab: $oranlarSubTab)
+                            dynamicTableView
+                        }
+                    case .getiriRisk:
+                        VStack(spacing: 0) {
+                            genericSubTabBar(selectedTab: $getiriRiskSubTab)
+                            dynamicTableView
+                        }
+                    case .teknikAnaliz:
+                        VStack(spacing: 0) {
+                            genericSubTabBar(selectedTab: $teknikSubTab)
+                            dynamicTableView
+                        }
+                    case .degerleme:
+                        dynamicTableView
                     }
                 }
-                .simultaneousGesture(
-                    DragGesture(minimumDistance: 5)
-                        .onChanged { value in
-                            guard abs(value.translation.width) > abs(value.translation.height) else { return }
-                            let proposed = sHOffsetAtStart - value.translation.width
-                            sHOffset = max(0, min(proposed, sMaxHOffset))
-                        }
-                        .onEnded { _ in sHOffsetAtStart = sHOffset }
-                )
-                .background(Color(.systemBackground))
-
-                // Tap backdrop — dismisses picker when tapping outside dropdown
+                
+                // Tap backdrop
                 if showingSectorPicker {
                     Color.black.opacity(0.001)
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -404,11 +441,11 @@ struct SectoralAnalysisView: View {
                             }
                         }
                 }
-
+                
                 // Sector selector (always fixed at top)
                 sectorSelectorCard
-
-                // Dropdown (separate layer, positioned directly below selector)
+                
+                // Dropdown
                 if showingSectorPicker {
                     sectorDropdown
                         .padding(.top, 54)
@@ -416,109 +453,204 @@ struct SectoralAnalysisView: View {
                         .transition(.opacity.combined(with: .scale(scale: 0.97, anchor: .top)))
                 }
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(Color(.systemBackground))
+        }
+        .onAppear {
+            if selectedSector == nil, let first = viewModel.sectorList.first {
+                selectedSector = first
+            }
+        }
+        .onChange(of: viewModel.sectorList) { newList in
+            if selectedSector == nil {
+                selectedSector = newList.first
+            }
+        }
+        .onChange(of: selectedSector) { newSector in
+            if let sector = newSector {
+                viewModel.loadSectorDetail(sectorName: sector.ad)
+            }
         }
     }
 
-    private var sectorSelectorCard: some View {
-        Button {
-            withAnimation(.spring(response: 0.25, dampingFraction: 0.85)) {
-                showingSectorPicker.toggle()
-                if !showingSectorPicker { sectorSearchText = "" }
+    private var saSubTabBar: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 28) {
+                ForEach(SASubTab.allCases, id: \.self) { tab in
+                    Button {
+                        withAnimation(.easeInOut(duration: 0.2)) { saSubTab = tab }
+                    } label: {
+                        VStack(spacing: 0) {
+                            Text(tab.rawValue)
+                                .font(.system(size: 16, weight: saSubTab == tab ? .bold : .medium))
+                                .foregroundColor(saSubTab == tab ? .primary : .secondary)
+                                .padding(.vertical, 16)
+                            
+                            Rectangle()
+                                .fill(saSubTab == tab ? Color.midGreen : Color.clear)
+                                .frame(height: 3)
+                        }
+                    }
+                    .buttonStyle(.plain)
+                }
             }
-        } label: {
-            HStack {
-                Text(SAGroupData.bilanco[selectedGroupIndex].name)
-                    .font(.system(size: 16, weight: .bold))
-                    .foregroundColor(.primary)
-                Spacer()
-                Image(systemName: showingSectorPicker ? "chevron.up" : "chevron.down")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(Color.midGreen)
-            }
-            .padding(.horizontal, 16)
-            .frame(height: 54)
+            .padding(.horizontal, 20)
         }
-        .buttonStyle(.plain)
         .background(Color(.systemBackground))
         .overlay(alignment: .bottom) { Divider() }
+    }
+
+    private func genericSubTabBar<T: RawRepresentable & Hashable & CaseIterable>(
+        selectedTab: Binding<T>
+    ) -> some View where T.RawValue == String {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 28) {
+                ForEach(Array(T.allCases), id: \.self) { tab in
+                    Button {
+                        withAnimation(.easeInOut(duration: 0.15)) { selectedTab.wrappedValue = tab }
+                    } label: {
+                        Text(tab.rawValue)
+                            .font(.system(size: 15, weight: selectedTab.wrappedValue == tab ? .bold : .medium))
+                            .foregroundColor(selectedTab.wrappedValue == tab ? Color.midGreen : .secondary)
+                            .padding(.vertical, 14)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .padding(.horizontal, 20)
+        }
+        .background(Color(.systemBackground))
+        .overlay(alignment: .bottom) { Divider() }
+    }
+
+    private var dynamicTableView: some View {
+        ScrollView(.vertical, showsIndicators: false) {
+            VStack(spacing: 0) {
+                Divider()
+                stockTableHeader
+                let stocks = sortedStocks(dynamicStocks)
+                if viewModel.isDetailLoading {
+                    ProgressView()
+                        .padding(.top, 40)
+                } else if stocks.isEmpty {
+                    Text("Veri bulunamadı")
+                        .foregroundColor(.secondary)
+                        .padding(.top, 40)
+                } else {
+                    ForEach(Array(stocks.enumerated()), id: \.element.id) { idx, stock in
+                        Divider()
+                        stockTableRow(stock, idx: idx, headers: dynamicHeaders)
+                    }
+                }
+            }
+        }
+        .simultaneousGesture(
+            DragGesture(minimumDistance: 5)
+                .onChanged { value in
+                    guard abs(value.translation.width) > abs(value.translation.height) else { return }
+                    let proposed = sHOffsetAtStart - value.translation.width
+                    sHOffset = max(0, min(proposed, sMaxHOffset))
+                }
+                .onEnded { _ in sHOffsetAtStart = sHOffset }
+        )
+        .background(Color(.systemBackground))
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    private var sectorSelectorCard: some View {
+        VStack(spacing: 0) {
+            Button {
+                withAnimation(.spring(response: 0.25, dampingFraction: 0.85)) {
+                    showingSectorPicker.toggle()
+                    if !showingSectorPicker { sectorSearchText = "" }
+                }
+            } label: {
+                HStack {
+                    Text(selectedSector?.ad ?? "Sektör Seçiniz")
+                        .font(.system(size: 16, weight: .bold))
+                        .foregroundColor(.primary)
+                    Spacer()
+                    Image(systemName: showingSectorPicker ? "chevron.up" : "chevron.down")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(Color.midGreen)
+                }
+                .padding(.horizontal, 16)
+                .frame(height: 54)
+                .background(Color(.systemBackground))
+            }
+            .buttonStyle(.plain)
+            
+            if !showingSectorPicker {
+                Divider()
+            }
+        }
     }
 
     private var sectorDropdown: some View {
         VStack(spacing: 0) {
             TextField("Ara...", text: $sectorSearchText)
-                .textFieldStyle(.roundedBorder)
-                .padding(.horizontal, 14)
-                .padding(.top, 12)
-                .padding(.bottom, 6)
+                .font(.system(size: 15))
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
+                .background(Color(.systemGray6))
+                .cornerRadius(10)
+                .padding(.horizontal, 16)
+                .padding(.top, 16)
+                .padding(.bottom, 12)
 
             ScrollView(.vertical, showsIndicators: false) {
                 VStack(spacing: 0) {
-                    ForEach(filteredBilanco, id: \.group.id) { item in
+                    ForEach(filteredSectors, id: \.id) { sector in
                         Button {
                             withAnimation(.easeInOut(duration: 0.15)) {
-                                selectedGroupIndex = item.index
+                                selectedSector = sector
                                 showingSectorPicker = false
                                 sectorSearchText = ""
                                 sHOffset = 0
                                 sHOffsetAtStart = 0
-                                stockSortCol = .donenVarliklar
+                                dynamicSortCol = nil
                                 stockSortAscending = true
                             }
                         } label: {
-                            Text(item.group.name)
-                                .font(.system(size: 16, weight: .semibold))
-                                .foregroundColor(selectedGroupIndex == item.index ? Color.midGreen : .primary)
+                            Text(sector.ad)
+                                .font(.system(size: 15, weight: .bold))
+                                .foregroundColor(.primary)
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .padding(.horizontal, 16)
                                 .padding(.vertical, 14)
                         }
                         .buttonStyle(.plain)
-                        Divider().padding(.leading, 16)
                     }
                 }
+                .padding(.bottom, 8)
             }
             .frame(maxHeight: 320)
         }
-        .background(Color(.systemBackground))
-        .overlay(alignment: .bottom) { Divider() }
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color(.systemBackground))
+                .shadow(color: Color.black.opacity(0.1), radius: 10, x: 0, y: 4)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(Color(.systemGray5), lineWidth: 1)
+                )
+        )
+        .padding(.horizontal, 12)
+        .padding(.top, 12)
     }
 
-    private var finSubTabBar: some View {
-        HStack(spacing: 0) {
-            ForEach(FinSubTab.allCases, id: \.self) { tab in
-                Button {
-                    withAnimation(.easeInOut(duration: 0.15)) { finSubTab = tab }
-                } label: {
-                    Text(tab.rawValue)
-                        .font(.system(size: 13, weight: finSubTab == tab ? .semibold : .regular))
-                        .foregroundColor(finSubTab == tab ? Color.midGreen : .secondary)
-                        .padding(.vertical, 10)
-                        .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.plain)
-            }
-        }
-        .padding(.horizontal, 12)
-        .background(Color(.systemBackground))
-        .overlay(alignment: .bottom) { Divider() }
-    }
+
 
     private var stockTableHeader: some View {
-        HStack(spacing: 0) {
+        let headers = dynamicHeaders
+        return HStack(spacing: 0) {
             Text("Hisse")
                 .font(.system(size: 13, weight: .bold))
                 .frame(width: hisseWidth - 12, alignment: .leading)
                 .padding(.leading, 12)
                 .frame(width: hisseWidth)
             HStack(spacing: 0) {
-                stockHeaderCell("Dönen\nVarlıklar",   col: .donenVarliklar,  width: stockColW)
-                stockHeaderCell("Duran\nVarlıklar",   col: .duranVarliklar,  width: stockColW)
-                stockHeaderCell("Toplam\nVarlıklar",  col: .toplamVarliklar, width: stockColW)
-                stockHeaderCell("Kısa Vad.\nYük.",    col: .kisaVadeliYuk,   width: stockColW)
-                stockHeaderCell("Uzun Vad.\nYük.",    col: .uzunVadeliYuk,   width: stockColW)
-                stockHeaderCell("Özkaynaklar",        col: .ozkaynaklar,     width: stockColW)
+                ForEach(headers, id: \.self) { header in
+                    stockHeaderCell(header, width: stockColW)
+                }
                 Spacer(minLength: 12)
             }
             .offset(x: -sHOffset)
@@ -529,13 +661,13 @@ struct SectoralAnalysisView: View {
         .background(Color(.systemBackground))
     }
 
-    private func stockHeaderCell(_ title: String, col: StockSortCol, width: CGFloat) -> some View {
+    private func stockHeaderCell(_ title: String, width: CGFloat) -> some View {
         Button {
-            if stockSortCol == col { stockSortAscending.toggle() }
-            else { stockSortCol = col; stockSortAscending = true }
+            if dynamicSortCol == title { stockSortAscending.toggle() }
+            else { dynamicSortCol = title; stockSortAscending = true }
         } label: {
             HStack(alignment: .center, spacing: 3) {
-                stockSortIcon(active: stockSortCol == col)
+                stockSortIcon(active: dynamicSortCol == title)
                 Text(title)
                     .font(.system(size: 11, weight: .bold))
                     .multilineTextAlignment(.trailing)
@@ -564,7 +696,7 @@ struct SectoralAnalysisView: View {
         }
     }
 
-    private func stockTableRow(_ stock: FinancialStock, idx: Int) -> some View {
+    private func stockTableRow(_ stock: DynamicFinancialStock, idx: Int, headers: [String]) -> some View {
         HStack(spacing: 0) {
             Text(stock.code)
                 .font(.system(size: 13, weight: .medium))
@@ -573,18 +705,10 @@ struct SectoralAnalysisView: View {
                 .padding(.leading, 12)
                 .frame(width: hisseWidth)
             HStack(spacing: 0) {
-                Text(fmtMoney(stock.donenVarliklar))
-                    .frame(width: stockColW, alignment: .trailing)
-                Text(fmtMoney(stock.duranVarliklar))
-                    .frame(width: stockColW, alignment: .trailing)
-                Text(fmtMoney(stock.toplamVarliklar))
-                    .frame(width: stockColW, alignment: .trailing)
-                Text(fmtMoney(stock.kisaVadeliYuk))
-                    .frame(width: stockColW, alignment: .trailing)
-                Text(fmtMoney(stock.uzunVadeliYuk))
-                    .frame(width: stockColW, alignment: .trailing)
-                Text(fmtMoney(stock.ozkaynaklar))
-                    .frame(width: stockColW, alignment: .trailing)
+                ForEach(headers, id: \.self) { header in
+                    Text(formatIndicator(stock.values[header]))
+                        .frame(width: stockColW, alignment: .trailing)
+                }
                 Spacer(minLength: 12)
             }
             .font(.system(size: 13))
@@ -597,35 +721,29 @@ struct SectoralAnalysisView: View {
         .background(idx % 2 == 1 ? Color(.systemGray6).opacity(0.4) : Color(.systemBackground))
     }
 
-    private func sortedStocks(_ stocks: [FinancialStock]) -> [FinancialStock] {
-        stocks.sorted {
-            let l: Double, r: Double
-            switch stockSortCol {
-            case .donenVarliklar:  l = $0.donenVarliklar;  r = $1.donenVarliklar
-            case .duranVarliklar:  l = $0.duranVarliklar;  r = $1.duranVarliklar
-            case .toplamVarliklar: l = $0.toplamVarliklar; r = $1.toplamVarliklar
-            case .kisaVadeliYuk:   l = $0.kisaVadeliYuk;   r = $1.kisaVadeliYuk
-            case .uzunVadeliYuk:   l = $0.uzunVadeliYuk;   r = $1.uzunVadeliYuk
-            case .ozkaynaklar:     l = $0.ozkaynaklar;     r = $1.ozkaynaklar
-            }
+    private func sortedStocks(_ stocks: [DynamicFinancialStock]) -> [DynamicFinancialStock] {
+        guard let sortCol = dynamicSortCol else {
+            return stocks.sorted { $0.code < $1.code }
+        }
+        return stocks.sorted {
+            let l = $0.values[sortCol]?.value ?? 0
+            let r = $1.values[sortCol]?.value ?? 0
             return stockSortAscending ? l < r : l > r
         }
     }
-
-    private var saPlaceholder: some View {
-        VStack(spacing: 16) {
-            Spacer(minLength: 60)
-            Image(systemName: "chart.bar.xaxis")
-                .font(.system(size: 48))
-                .foregroundColor(.secondary)
-            Text("Bu içerik yakında eklenecek.")
-                .foregroundColor(.secondary)
-                .font(.subheadline)
-            Spacer()
+    
+    private func formatIndicator(_ ind: IndicatorValue?) -> String {
+        guard let ind = ind else { return "-" }
+        if ind.isPercentage == true {
+            return fmtPercent(ind.value)
+        } else if saSubTab == .finansallar {
+            return fmtMoney(ind.value)
+        } else {
+            return fmtDecimal(ind.value)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color(.systemBackground))
     }
+
+
 
     // MARK: - Sort Indicator
     @ViewBuilder
@@ -666,46 +784,6 @@ struct SectoralAnalysisView: View {
 
 // Mock Data for SectoralAnalysizView was removed since it is now populated via API
 
-// MARK: - Financial Sector Group Mock Data
-
-private enum SAGroupData {
-    static let bilanco: [FinancialSectorGroup] = [
-        FinancialSectorGroup(name: "Bina Malzemeleri", stocks: [
-            FinancialStock(code: "DNISI",  donenVarliklar:  425_310_000,  duranVarliklar:  1_390_000_000, toplamVarliklar:  1_815_310_000, kisaVadeliYuk:   890_000_000, uzunVadeliYuk:  280_000_000, ozkaynaklar:   645_310_000),
-            FinancialStock(code: "EPLAS",  donenVarliklar:  566_880_000,  duranVarliklar:  4_840_000_000, toplamVarliklar:  5_406_880_000, kisaVadeliYuk: 2_100_000_000, uzunVadeliYuk:  820_000_000, ozkaynaklar: 2_486_880_000),
-            FinancialStock(code: "MARBL",  donenVarliklar: 2_240_000_000, duranVarliklar:  2_250_000_000, toplamVarliklar:  4_490_000_000, kisaVadeliYuk: 1_500_000_000, uzunVadeliYuk:  640_000_000, ozkaynaklar: 2_350_000_000),
-            FinancialStock(code: "EGSER",  donenVarliklar: 4_010_000_000, duranVarliklar:  3_580_000_000, toplamVarliklar:  7_590_000_000, kisaVadeliYuk: 2_800_000_000, uzunVadeliYuk: 1_200_000_000, ozkaynaklar: 3_590_000_000),
-            FinancialStock(code: "INTEM",  donenVarliklar: 4_040_000_000, duranVarliklar:    241_240_000, toplamVarliklar:  4_281_240_000, kisaVadeliYuk: 1_900_000_000, uzunVadeliYuk:  450_000_000, ozkaynaklar: 1_931_240_000),
-            FinancialStock(code: "OZYSR",  donenVarliklar: 4_610_000_000, duranVarliklar:  4_180_000_000, toplamVarliklar:  8_790_000_000, kisaVadeliYuk: 3_200_000_000, uzunVadeliYuk:  900_000_000, ozkaynaklar: 4_690_000_000),
-            FinancialStock(code: "EUREN",  donenVarliklar: 5_120_000_000, duranVarliklar: 10_970_000_000, toplamVarliklar: 16_090_000_000, kisaVadeliYuk: 5_400_000_000, uzunVadeliYuk: 2_200_000_000, ozkaynaklar: 8_490_000_000),
-            FinancialStock(code: "KLKIM",  donenVarliklar: 5_820_000_000, duranVarliklar:  4_460_000_000, toplamVarliklar: 10_280_000_000, kisaVadeliYuk: 3_800_000_000, uzunVadeliYuk: 1_400_000_000, ozkaynaklar: 5_080_000_000),
-            FinancialStock(code: "SERNT",  donenVarliklar: 5_840_000_000, duranVarliklar:  7_700_000_000, toplamVarliklar: 13_540_000_000, kisaVadeliYuk: 4_600_000_000, uzunVadeliYuk: 1_800_000_000, ozkaynaklar: 7_140_000_000),
-            FinancialStock(code: "USAK",   donenVarliklar: 6_090_000_000, duranVarliklar:  6_460_000_000, toplamVarliklar: 12_550_000_000, kisaVadeliYuk: 4_200_000_000, uzunVadeliYuk: 1_600_000_000, ozkaynaklar: 6_750_000_000),
-            FinancialStock(code: "KLSER",  donenVarliklar: 9_270_000_000, duranVarliklar: 11_240_000_000, toplamVarliklar: 20_510_000_000, kisaVadeliYuk: 7_200_000_000, uzunVadeliYuk: 2_800_000_000, ozkaynaklar: 10_510_000_000),
-            FinancialStock(code: "EGPRO",  donenVarliklar: 9_870_000_000, duranVarliklar:  8_780_000_000, toplamVarliklar: 18_650_000_000, kisaVadeliYuk: 6_800_000_000, uzunVadeliYuk: 2_400_000_000, ozkaynaklar: 9_450_000_000),
-            FinancialStock(code: "QUAGR",  donenVarliklar: 10_480_000_000, duranVarliklar: 10_670_000_000, toplamVarliklar: 21_150_000_000, kisaVadeliYuk: 7_600_000_000, uzunVadeliYuk: 3_000_000_000, ozkaynaklar: 10_550_000_000),
-            FinancialStock(code: "BIENY",  donenVarliklar: 13_460_000_000, duranVarliklar: 14_020_000_000, toplamVarliklar: 27_480_000_000, kisaVadeliYuk: 9_800_000_000, uzunVadeliYuk: 3_600_000_000, ozkaynaklar: 14_080_000_000),
-        ]),
-        FinancialSectorGroup(name: "Kimya, Petrol", stocks: [
-            FinancialStock(code: "AYGAZ",  donenVarliklar:  8_240_000_000, duranVarliklar:  5_670_000_000, toplamVarliklar: 13_910_000_000, kisaVadeliYuk:  3_400_000_000, uzunVadeliYuk: 1_100_000_000, ozkaynaklar:  9_410_000_000),
-            FinancialStock(code: "TUPRS",  donenVarliklar: 48_200_000_000, duranVarliklar: 31_800_000_000, toplamVarliklar: 80_000_000_000, kisaVadeliYuk: 28_000_000_000, uzunVadeliYuk: 12_000_000_000, ozkaynaklar: 40_000_000_000),
-            FinancialStock(code: "PETKM",  donenVarliklar: 12_500_000_000, duranVarliklar: 18_300_000_000, toplamVarliklar: 30_800_000_000, kisaVadeliYuk:  9_200_000_000, uzunVadeliYuk:  5_800_000_000, ozkaynaklar: 15_800_000_000),
-            FinancialStock(code: "GUBRF",  donenVarliklar:  6_100_000_000, duranVarliklar:  4_200_000_000, toplamVarliklar: 10_300_000_000, kisaVadeliYuk:  3_100_000_000, uzunVadeliYuk:  1_800_000_000, ozkaynaklar:  5_400_000_000),
-        ]),
-        FinancialSectorGroup(name: "Metal Ana Sanayi", stocks: [
-            FinancialStock(code: "EREGL",   donenVarliklar: 42_000_000_000, duranVarliklar: 38_000_000_000, toplamVarliklar: 80_000_000_000, kisaVadeliYuk: 18_000_000_000, uzunVadeliYuk:  8_000_000_000, ozkaynaklar: 54_000_000_000),
-            FinancialStock(code: "KRDMD",   donenVarliklar: 15_300_000_000, duranVarliklar: 12_200_000_000, toplamVarliklar: 27_500_000_000, kisaVadeliYuk:  7_400_000_000, uzunVadeliYuk:  3_200_000_000, ozkaynaklar: 16_900_000_000),
-            FinancialStock(code: "ISDMR",   donenVarliklar: 32_100_000_000, duranVarliklar: 28_400_000_000, toplamVarliklar: 60_500_000_000, kisaVadeliYuk: 14_200_000_000, uzunVadeliYuk:  7_800_000_000, ozkaynaklar: 38_500_000_000),
-            FinancialStock(code: "CEMAS",   donenVarliklar:  4_800_000_000, duranVarliklar:  6_200_000_000, toplamVarliklar: 11_000_000_000, kisaVadeliYuk:  3_600_000_000, uzunVadeliYuk:  2_100_000_000, ozkaynaklar:  5_300_000_000),
-        ]),
-        FinancialSectorGroup(name: "Çimento, Beton, Cam", stocks: [
-            FinancialStock(code: "AKCNS",  donenVarliklar:  9_800_000_000, duranVarliklar: 12_400_000_000, toplamVarliklar: 22_200_000_000, kisaVadeliYuk:  4_200_000_000, uzunVadeliYuk:  2_600_000_000, ozkaynaklar: 15_400_000_000),
-            FinancialStock(code: "CIMSA",  donenVarliklar:  7_600_000_000, duranVarliklar: 10_200_000_000, toplamVarliklar: 17_800_000_000, kisaVadeliYuk:  3_400_000_000, uzunVadeliYuk:  2_100_000_000, ozkaynaklar: 12_300_000_000),
-            FinancialStock(code: "TRKCM",  donenVarliklar: 12_300_000_000, duranVarliklar: 18_700_000_000, toplamVarliklar: 31_000_000_000, kisaVadeliYuk:  5_800_000_000, uzunVadeliYuk:  4_200_000_000, ozkaynaklar: 21_000_000_000),
-            FinancialStock(code: "SISE",   donenVarliklar: 28_500_000_000, duranVarliklar: 42_100_000_000, toplamVarliklar: 70_600_000_000, kisaVadeliYuk: 12_400_000_000, uzunVadeliYuk:  8_600_000_000, ozkaynaklar: 49_600_000_000),
-        ]),
-    ]
-}
 
 #Preview {
     SectoralAnalysisView()

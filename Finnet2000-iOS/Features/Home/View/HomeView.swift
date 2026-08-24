@@ -53,7 +53,7 @@ func formatDate(_ dateString: String) -> String {
 struct HomePageScreen: View {
   @Environment(\.scenePhase) private var scenePhase
   @StateObject private var viewModel: HomeViewModel
-  @StateObject private var wsManager = StockWebSocketManager()
+  @StateObject private var liveDataVM = StockLiveDataViewModel()
 
   init(viewModelFactory: @escaping @MainActor () -> HomeViewModel) {
     _viewModel = StateObject(wrappedValue: viewModelFactory())
@@ -74,7 +74,7 @@ struct HomePageScreen: View {
         ScrollViewReader { proxy in
             ScrollView {
                 VStack(spacing: 0) {
-                    DarkHeaderView(contents: data.contents ?? [], liveStocks: wsManager.stocks)
+                    DarkHeaderView(contents: data.contents ?? [], liveStocks: liveDataVM.stocks)
                     VStack(spacing: 0) {
                         RoboSepetlerView(portfolios: data.robofundResponse ?? [])
                             .padding(.horizontal, 16)
@@ -110,14 +110,14 @@ struct HomePageScreen: View {
       }
     }
     .task { viewModel.fetch() }
-    .onAppear { wsManager.connect() }
-    .onDisappear { wsManager.disconnect() }
+    .onAppear { liveDataVM.connect() }
+    .onDisappear { liveDataVM.disconnect() }
     .onChange(of: scenePhase) { _, newPhase in
       switch newPhase {
       case .active:
-        wsManager.connect()
+        liveDataVM.connect()
       case .background:
-        wsManager.disconnect()
+        liveDataVM.disconnect()
       case .inactive:
         break
       @unknown default:

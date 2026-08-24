@@ -49,7 +49,7 @@ final class StockWebSocketManager: ObservableObject {
 
     // MARK: - Lifecycle
 
-    func connect() {
+    func connect(token: String? = nil) {
         userInitiatedDisconnect = false
         reconnectTask?.cancel()
         reconnectTask = nil
@@ -60,7 +60,7 @@ final class StockWebSocketManager: ObservableObject {
         }
 
         wsLog("connect() başlatıldı")
-        openSocket()
+        openSocket(token: token)
     }
 
     func disconnect() {
@@ -75,14 +75,16 @@ final class StockWebSocketManager: ObservableObject {
 
     // MARK: - Private
 
-    private func openSocket() {
+    private func openSocket(token: String? = nil) {
         guard let url = URL(string: Self.wsURLString) else { return }
-        wsLog("Socket açılıyor → URL: \(Self.wsURLString)")
+        
+        let tokenDebug = token != nil ? String(token!.prefix(15)) + "..." : "nil"
+        wsLog("Socket açılıyor → URL: \(Self.wsURLString) | Token: \(tokenDebug)")
 
         var request = URLRequest(url: url)
         request.timeoutInterval = 30
-        if let accessToken = TokenManager.shared.accessToken, !accessToken.isEmpty {
-            request.setValue("Access-Token, \(accessToken)", forHTTPHeaderField: "Sec-WebSocket-Protocol")
+        if let token = token, !token.isEmpty {
+            request.setValue("Access-Token, \(token)", forHTTPHeaderField: "Sec-WebSocket-Protocol")
         } else {
             request.setValue("Access-Token", forHTTPHeaderField: "Sec-WebSocket-Protocol")
         }
@@ -194,7 +196,9 @@ final class StockWebSocketManager: ObservableObject {
             try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
             guard let self, !Task.isCancelled, !self.userInitiatedDisconnect else { return }
             self.wsLog("Yeniden bağlanıyor...")
-            self.openSocket()
+            // We should use the previously used token if available, but for now we'll just reconnect.
+            // Ideally, the token should be stored in a property.
+            self.openSocket(token: UserDefaults.standard.string(forKey: "liveDataAuthToken"))
         }
     }
 }
@@ -235,7 +239,15 @@ extension StockWebSocketManager: WebSocketDelegate {
             }
 
         case .error(let error):
-            let desc = error?.localizedDescription ?? "unknown"
+            var desc = error?.localizedDescription ?? "unknown"
+            if let upgradeError = error as? HTTPUpgradeError {
+                switch upgradeError {
+                case .notAnUpgrade(let code, let headers):
+                    desc = "HTTPUpgradeError (Status: \(code)) Headers: \(headers)"
+                case .invalidData:
+                    desc = "HTTPUpgradeError (InvalidData)"
+                }
+            }
             Task { @MainActor [weak self] in
                 guard let self else { return }
                 self.wsLog("HATA: \(desc)")

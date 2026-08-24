@@ -4,7 +4,10 @@ import Combine
 @MainActor
 final class SectoralAnalysisViewModel: ObservableObject {
     @Published private(set) var sectors: [SectorRow] = []
+    @Published private(set) var sectorList: [SectorListItem] = []
+    @Published private(set) var sectorDetail: SectorAnalysisDetailData?
     @Published private(set) var isLoading = false
+    @Published private(set) var isDetailLoading = false
     @Published private(set) var errorMessage: String?
     
     private let repository: SectoralAnalysisRepositoryProtocol
@@ -21,10 +24,32 @@ final class SectoralAnalysisViewModel: ObservableObject {
         Task {
             defer { isLoading = false }
             do {
-                let response = try await repository.fetchSectors()
-                self.sectors = self.mapToSectorRows(response.data)
+                async let fetchSectors = repository.fetchSectors()
+                async let fetchSectorList = repository.fetchSectorList()
+                
+                let (sectorsResponse, sectorListResponse) = try await (fetchSectors, fetchSectorList)
+                self.sectors = self.mapToSectorRows(sectorsResponse.data)
+                self.sectorList = sectorListResponse.data
+
             } catch {
                 print("Sector fetch error: \(error)")
+                self.errorMessage = error.localizedDescription
+            }
+        }
+    }
+    
+    func loadSectorDetail(sectorName: String) {
+        guard !isDetailLoading else { return }
+        isDetailLoading = true
+        errorMessage = nil
+        
+        Task {
+            defer { isDetailLoading = false }
+            do {
+                let response = try await repository.fetchSectorDetail(sectorName: sectorName)
+                self.sectorDetail = response.data
+            } catch {
+                print("Sector detail fetch error: \(error)")
                 self.errorMessage = error.localizedDescription
             }
         }

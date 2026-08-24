@@ -2,7 +2,7 @@ import Foundation
 
 // MARK: - StockData (WebSocket live message)
 
-struct StockData: Decodable {
+struct StockData: Codable {
     let symbol: String?
     let priceStep: Double?
     let limitDown: Double?

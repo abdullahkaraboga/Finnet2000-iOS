@@ -4,6 +4,7 @@ struct StockScannerView: View {
 
     @State private var selectedTab = 0
     @State private var selectedListTab = 0
+    @State private var showFilter = false
 
     private let primaryGreen = ColorConstants.finnetGreen
 
@@ -104,7 +105,9 @@ struct StockScannerView: View {
                         // Örnek Listeler içeriği
                     }
 
-                    Button(action: {}) {
+                    Button(action: {
+                        showFilter = true
+                    }) {
 
                         HStack(spacing: 8) {
 
@@ -137,6 +140,9 @@ struct StockScannerView: View {
         .navigationBarTitleDisplayMode(.inline)
         .transparentNavigationBar()
         .background(Color(.systemBackground).ignoresSafeArea())
+        .fullScreenCover(isPresented: $showFilter) {
+            FilterView()
+        }
     }
 }
 
