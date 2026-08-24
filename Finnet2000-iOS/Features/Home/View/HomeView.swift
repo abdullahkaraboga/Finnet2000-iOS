@@ -231,30 +231,57 @@ private struct BannerCardView: View {
 
 private struct TickerGridView: View {
   let liveStocks: [String: StockData]
+  @State private var offsetIndex = 0
 
-  /// Gösterilecek sembol sırası (ilk 8 indeks)
-  private let displayCodes = Array(StockWebSocketManager.indexCodes.prefix(8))
+  private let allCodes = StockWebSocketManager.indexCodes
+  private var row1Codes: [String] { Array(allCodes[0..<16]) }
+  private var row2Codes: [String] { Array(allCodes[16..<32]) }
 
-  private var rows: [[String]] {
-    stride(from: 0, to: displayCodes.count, by: 4).map {
-      Array(displayCodes[$0..<min($0 + 4, displayCodes.count)])
-    }
-  }
+  // 1 saniyede bir kaydır
+  let timer = Timer.publish(every: 1.0, on: .main, in: .common).autoconnect()
 
   var body: some View {
     VStack(spacing: 8) {
-      ForEach(Array(rows.enumerated()), id: \.offset) { rowIdx, row in
-        HStack(spacing: 8) {
-          ForEach(row, id: \.self) { code in
-            LiveTickerItemView(code: code, data: liveStocks[code])
-              .frame(maxWidth: .infinity)
+      // Satır 1
+      HStack(spacing: 8) {
+          ForEach(0..<4, id: \.self) { colIdx in
+              let actualIdx = (offsetIndex + colIdx) % 16
+              let code = row1Codes[actualIdx]
+              LiveTickerItemView(code: code, data: liveStocks[code])
+                  .frame(maxWidth: .infinity)
+                  .id(code) // id ile kartların pozisyon değişimi takip edilir
+                  .transition(.asymmetric(
+                      insertion: .move(edge: .leading).combined(with: .opacity),
+                      removal: .move(edge: .trailing).combined(with: .opacity)
+                  ))
           }
-        }
+      }
+      
+      // Satır 2
+      HStack(spacing: 8) {
+          ForEach(0..<4, id: \.self) { colIdx in
+              let actualIdx = (offsetIndex + colIdx) % 16
+              let code = row2Codes[actualIdx]
+              LiveTickerItemView(code: code, data: liveStocks[code])
+                  .frame(maxWidth: .infinity)
+                  .id(code)
+                  .transition(.asymmetric(
+                      insertion: .move(edge: .leading).combined(with: .opacity),
+                      removal: .move(edge: .trailing).combined(with: .opacity)
+                  ))
+          }
       }
     }
     .padding(.horizontal, 16)
     .padding(.vertical, 16)
     .background(Color(.systemGray6))
+    .clipped()
+    .onReceive(timer) { _ in
+        withAnimation(.easeInOut(duration: 0.5)) {
+            // Sağa doğru kayması için offset azalarak geriye gitmeli
+            offsetIndex = (offsetIndex - 1 + 16) % 16
+        }
+    }
   }
 }
 
