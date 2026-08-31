@@ -22,14 +22,7 @@ struct TabBarView: View {
     var body: some View {
         NavigationStack {
             ZStack(alignment: .leading) {
-                TabView(selection: Binding(
-                    get: { selectedTab },
-                    set: { newTab in
-                        var t = Transaction()
-                        t.disablesAnimations = true
-                        withTransaction(t) { selectedTab = newTab }
-                    }
-                )) {
+                TabView(selection: $selectedTab) {
                     tabRoot {
                         HomeView(viewModel: dependencyContainer.makeHomeViewModel())
                     }
@@ -62,6 +55,7 @@ struct TabBarView: View {
                 }
                 .tint(.blue)
                 .disabled(isDrawerPresented)
+                .animation(nil, value: selectedTab)
 
                 if isDrawerPresented {
                     Color.black.opacity(0.18)

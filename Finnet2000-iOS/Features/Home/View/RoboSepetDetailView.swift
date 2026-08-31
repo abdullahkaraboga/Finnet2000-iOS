@@ -39,6 +39,11 @@ struct RoboSepetDetailView: View {
                     viewModel.fetchRoboSepetDetail(portfolioId: portfolioId)
                 }
             }
+            .onChange(of: viewModel.detail?.isFavourite) { fav in
+                if let fav = fav {
+                    isFavourite = fav
+                }
+            }
         }
     }
 
@@ -49,7 +54,10 @@ struct RoboSepetDetailView: View {
                 RSNavBar(
                     detail: detail,
                     isFavourite: $isFavourite,
-                    onBack: onBack ?? { dismiss() }
+                    onBack: onBack ?? { dismiss() },
+                    onToggleFavourite: {
+                        viewModel.toggleFavourite(robofundCode: detail.code)
+                    }
                 )
 
                 ScrollView {
@@ -136,6 +144,7 @@ private struct RSNavBar: View {
     let detail: RoboSepetDetailResponse
     @Binding var isFavourite: Bool
     var onBack: (() -> Void)?
+    var onToggleFavourite: (() -> Void)?
 
     private var isPositive: Bool { detail.dailyReturn >= 0 }
     private var returnColor: Color { isPositive ? .midGreen : Color.red }
@@ -156,7 +165,10 @@ private struct RSNavBar: View {
 
                 Spacer()
 
-                Button { isFavourite.toggle() } label: {
+                Button { 
+                    isFavourite.toggle() 
+                    onToggleFavourite?()
+                } label: {
                     Image(systemName: isFavourite ? "heart.fill" : "heart")
                         .font(.system(size: 17, weight: .semibold))
                         .foregroundStyle(isFavourite ? Color.red : .primary)
@@ -197,7 +209,7 @@ private struct RSNavBar: View {
             .padding(.top, 8)
             .padding(.bottom, 16)
         }
-        .background(.regularMaterial)
+        .background(Color(.systemBackground))
         .frame(maxWidth: .infinity)
     }
 }

@@ -34,4 +34,16 @@ final class RoboSepetDetailViewModel: ObservableObject {
             }
         }
     }
+    
+    func toggleFavourite(robofundCode: String) {
+        repository.toggleFavouriteRobofund(robofundCode: robofundCode) { result in
+            // Başarılı veya başarısız durumu loglanabilir. UI state'i View içinde optimistic (anında) güncellenecek.
+            switch result {
+            case .success:
+                print("Robofon favorilere eklendi/çıkarıldı.")
+            case .failure(let error):
+                print("Robofon favori işlemi hatası: \(error)")
+            }
+        }
+    }
 }

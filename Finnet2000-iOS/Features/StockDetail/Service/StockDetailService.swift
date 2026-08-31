@@ -90,4 +90,22 @@ final class StockDetailService {
                 }
             }
     }
+
+    func toggleFavouriteStock(
+        stockCode: String,
+        completion: @escaping (Result<Void, AFError>) -> Void
+    ) {
+        let url = "https://api.finnet2000.com/api/Favourites/AddOrDeleteFavouriteStock"
+        NetworkManager.shared.authedSession
+            .request(url, method: .get, parameters: ["stockCode": stockCode])
+            .validate(statusCode: 200..<300)
+            .response { response in
+                switch response.result {
+                case .success:
+                    completion(.success(()))
+                case .failure(let error):
+                    completion(.failure(error))
+                }
+            }
+    }
 }

@@ -47,9 +47,7 @@ struct ListsView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .onAppear {
-            if viewModel.stocks.isEmpty && viewModel.robofunds.isEmpty {
-                viewModel.loadFavourites()
-            }
+            viewModel.loadFavourites()
             if viewModel.portfolios.isEmpty {
                 viewModel.loadPortfolios()
             }
@@ -122,31 +120,36 @@ struct ListsView: View {
                         ListSectionHeader(title: "Robofonlarım", icon: "cpu", sortOrder: $fundSort)
                         
                         ForEach(sortedFunds) { fund in
-                            HStack {
-                                AsyncImage(url: URL(string: fund.logoPath)) { image in
-                                    image.resizable()
-                                } placeholder: {
-                                    Color.gray.opacity(0.3)
-                                }
-                                .frame(width: 40, height: 40)
-                                .clipShape(RoundedRectangle(cornerRadius: 8))
+                            NavigationLink { 
+                                RoboSepetDetailView(portfolioId: fund.portfolioId)
+                            } label: {
+                                HStack {
+                                    AsyncImage(url: URL(string: fund.logoPath)) { image in
+                                        image.resizable()
+                                    } placeholder: {
+                                        Color.gray.opacity(0.3)
+                                    }
+                                    .frame(width: 40, height: 40)
+                                    .clipShape(RoundedRectangle(cornerRadius: 8))
 
-                                VStack(alignment: .leading) {
-                                    Text(fund.robofundCode)
+                                    VStack(alignment: .leading) {
+                                        Text(fund.robofundCode)
+                                            .font(.headline)
+                                        Text(fund.robofundName)
+                                            .font(.subheadline)
+                                            .foregroundColor(.secondary)
+                                    }
+
+                                    Spacer()
+
+                                    Text(String(format: "%.2f%%", fund.return))
                                         .font(.headline)
-                                    Text(fund.robofundName)
-                                        .font(.subheadline)
-                                        .foregroundColor(.secondary)
+                                        .foregroundColor(fund.return >= 0 ? .green : .red)
                                 }
-
-                                Spacer()
-
-                                Text(String(format: "%.2f%%", fund.return))
-                                    .font(.headline)
-                                    .foregroundColor(fund.return >= 0 ? .green : .red)
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 10)
                             }
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 10)
+                            .buttonStyle(.plain)
                             Divider().padding(.leading, 56)
                         }
                     }

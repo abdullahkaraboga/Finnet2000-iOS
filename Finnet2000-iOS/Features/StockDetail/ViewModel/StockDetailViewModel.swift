@@ -8,6 +8,8 @@ final class StockDetailViewModel: ObservableObject {
     @Published var ratiosData: StockDetailRatiosData?
     @Published var sectoralAnalysisData: StockDetailSectoralAnalysisData?
     @Published var isLoading: Bool = false
+    @Published var isFavoriteLoading: Bool = false
+    @Published var isFavorite: Bool = false
     @Published var errorMessage: String? = nil
     
     func fetch(stockCode: String) {
@@ -21,6 +23,7 @@ final class StockDetailViewModel: ObservableObject {
                 switch result {
                 case .success(let data):
                     self.data = data
+                    self.isFavorite = data.userSpecificData?.isInFavorites ?? false
                 case .failure(let error):
                     self.errorMessage = error.localizedDescription
                 }
@@ -52,6 +55,24 @@ final class StockDetailViewModel: ObservableObject {
                             }
                         }
                     }
+                }
+            }
+        }
+    }
+    
+    func toggleFavorite(stockCode: String) {
+        guard !isFavoriteLoading else { return }
+        isFavoriteLoading = true
+        
+        StockDetailService.shared.toggleFavouriteStock(stockCode: stockCode) { [weak self] result in
+            guard let self = self else { return }
+            Task {
+                self.isFavoriteLoading = false
+                switch result {
+                case .success:
+                    self.isFavorite.toggle()
+                case .failure(let error):
+                    self.errorMessage = error.localizedDescription
                 }
             }
         }

@@ -3,17 +3,13 @@ import SwiftUI
 // MARK: - PozisyonAcSheet
 
 struct PozisyonAcSheet: View {
+    let stockCode: String
     var onClose: () -> Void = {}
 
-    private let portfolios = [
-        "Ana Portföy",
-        "Büyüme Fonu",
-        "Temettü Portföyü",
-        "Emeklilik",
-        "Kısa Vadeli"
-    ]
-
-    @State private var selectedPortfolio = "Ana Portföy"
+    @State private var portfolios: [PortfolioInfo] = []
+    @State private var isLoadingPortfolios = true
+    @State private var selectedPortfolio: PortfolioInfo?
+    @State private var isDropdownOpen = false
     @State private var selectedDate = Date()
     @State private var price = ""
     @State private var quantity = "0"
@@ -54,48 +50,97 @@ struct PozisyonAcSheet: View {
                 // Portföy seçimi
                 VStack(alignment: .leading, spacing: 4) {
                     fieldLabel("Portföy")
-                    Menu {
-                        ForEach(portfolios, id: \.self) { p in
-                            Button(p) { selectedPortfolio = p }
-                        }
-                    } label: {
+                    if isLoadingPortfolios {
                         HStack {
-                            Text(selectedPortfolio)
-                                .font(.system(size: 15, weight: .medium))
-                                .foregroundColor(.primary)
                             Spacer()
-                            Image(systemName: "chevron.up.chevron.down")
-                                .font(.system(size: 13, weight: .semibold))
-                                .foregroundColor(.secondary)
+                            ProgressView()
+                            Spacer()
                         }
-                        .padding(.horizontal, 14)
                         .frame(height: 46)
                         .background(fieldBg, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    } else {
+                        Button {
+                            withAnimation(.easeInOut(duration: 0.15)) {
+                                isDropdownOpen.toggle()
+                            }
+                        } label: {
+                            HStack {
+                                Text(selectedPortfolio?.portfolioName ?? "Portföy Seçin")
+                                    .font(.system(size: 15, weight: .medium))
+                                    .foregroundColor(selectedPortfolio != nil ? .primary : .secondary)
+                                Spacer()
+                                Image(systemName: "chevron.down")
+                                    .font(.system(size: 13, weight: .semibold))
+                                    .foregroundColor(.secondary)
+                                    .rotationEffect(.degrees(isDropdownOpen ? 180 : 0))
+                            }
+                            .padding(.horizontal, 14)
+                            .frame(height: 46)
+                            .background(fieldBg, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                        }
+                        .buttonStyle(.plain)
+                        .overlay(alignment: .top) {
+                            if isDropdownOpen {
+                                ScrollView(showsIndicators: false) {
+                                    VStack(alignment: .leading, spacing: 0) {
+                                        ForEach(portfolios) { p in
+                                            Button {
+                                                selectedPortfolio = p
+                                                withAnimation(.easeInOut(duration: 0.15)) { isDropdownOpen = false }
+                                            } label: {
+                                                Text(p.portfolioName)
+                                                    .font(.system(size: 15, weight: .medium))
+                                                    .foregroundColor(.primary)
+                                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                                    .padding(.horizontal, 14)
+                                                    .padding(.vertical, 12)
+                                            }
+                                            if p != portfolios.last {
+                                                Divider().padding(.horizontal, 14)
+                                            }
+                                        }
+                                    }
+                                }
+                                .frame(maxHeight: 220)
+                                .background(Color(UIColor.secondarySystemGroupedBackground))
+                                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                                .shadow(color: Color.black.opacity(0.15), radius: 10, x: 0, y: 5)
+                                .offset(y: 50)
+                            }
+                        }
                     }
                 }
+                .zIndex(10)
 
                 // Tarih
                 VStack(alignment: .leading, spacing: 4) {
                     fieldLabel("Tarih")
-                    ZStack {
-                        HStack {
-                            Text(dateFormatted)
-                                .font(.system(size: 15))
-                                .foregroundColor(.primary)
-                            Spacer()
-                            Image(systemName: "calendar")
-                                .foregroundColor(.secondary)
-                        }
-                        .padding(.horizontal, 14)
-                        .frame(height: 46)
-                        .background(fieldBg, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-
-                        DatePicker("", selection: $selectedDate, displayedComponents: .date)
+                    HStack {
+                        Text("Tarih")
+                            .font(.system(size: 15))
+                            .foregroundColor(.primary)
+                        Spacer()
+                        DatePicker("", selection: $selectedDate, in: ...Date(), displayedComponents: .date)
                             .labelsHidden()
-                            .frame(maxWidth: .infinity, maxHeight: .infinity)
-                            .opacity(0.011)
+                            .environment(\.locale, Locale(identifier: "tr_TR"))
                     }
+                    .padding(.horizontal, 14)
                     .frame(height: 46)
+                    .background(fieldBg, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                }
+                .zIndex(9)
+                .onChange(of: selectedDate) { newDate in
+                    let calendar = Calendar.current
+                    if calendar.isDateInWeekend(newDate) {
+                        // Cumartesi (7) veya Pazar (1) seçildiyse önceki Cuma'ya sabitle
+                        var components = DateComponents()
+                        components.day = (calendar.component(.weekday, from: newDate) == 1) ? -2 : -1
+                        if let friday = calendar.date(byAdding: components, to: newDate) {
+                            selectedDate = friday
+                        }
+                    } else {
+                        fetchPrice(for: newDate)
+                    }
                 }
 
                 // Fiyat + Adet yan yana
@@ -151,9 +196,65 @@ struct PozisyonAcSheet: View {
                         in: RoundedRectangle(cornerRadius: 14, style: .continuous)
                     )
             }
-            .disabled(!canSave)
+            .disabled(!canSave || selectedPortfolio == nil)
             .padding(.horizontal, 20)
             .padding(.bottom, 40)
+        }
+        .onAppear {
+            loadPortfolios()
+            
+            let calendar = Calendar.current
+            if calendar.isDateInWeekend(selectedDate) {
+                var components = DateComponents()
+                components.day = (calendar.component(.weekday, from: selectedDate) == 1) ? -2 : -1
+                if let friday = calendar.date(byAdding: components, to: selectedDate) {
+                    selectedDate = friday
+                    fetchPrice(for: friday)
+                }
+            } else {
+                fetchPrice(for: selectedDate)
+            }
+        }
+    }
+
+    private func fetchPrice(for date: Date) {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = TimeZone(secondsFromGMT: 0)
+        let dateString = formatter.string(from: date)
+        
+        ListsRepository().getPortfolioStockPrice(code: stockCode, date: dateString) { result in
+            DispatchQueue.main.async {
+                switch result {
+                case .success(let fetchedPrice):
+                    // Sadece 2 ondalık hane göster (örn: 15,30)
+                    let formattedPrice = String(format: "%.2f", fetchedPrice).replacingOccurrences(of: ".", with: ",")
+                    self.price = formattedPrice
+                case .failure:
+                    // Hata olursa kullanıcı kendi girebilir
+                    if self.price.isEmpty || self.price.starts(with: "Yanıt") || self.price.starts(with: "The data couldn't") {
+                        self.price = ""
+                    }
+                }
+            }
+        }
+    }
+    
+    private func loadPortfolios() {
+        isLoadingPortfolios = true
+        ListsRepository().getPortfoliosInfo { result in
+            DispatchQueue.main.async {
+                self.isLoadingPortfolios = false
+                switch result {
+                case .success(let data):
+                    self.portfolios = data
+                    self.selectedPortfolio = data.first
+                case .failure:
+                    // Hata durumunda boş liste kalacak, kullanıcıya uyarı gösterilebilir
+                    break
+                }
+            }
         }
     }
 
@@ -172,7 +273,7 @@ struct PozisyonAcSheet: View {
     Color.black.opacity(0.4)
         .ignoresSafeArea()
         .sheet(isPresented: .constant(true)) {
-            PozisyonAcSheet()
+            PozisyonAcSheet(stockCode: "TKNSA")
                 .presentationDetents([.medium, .large])
                 .presentationDragIndicator(.visible)
                 .presentationCornerRadius(28)

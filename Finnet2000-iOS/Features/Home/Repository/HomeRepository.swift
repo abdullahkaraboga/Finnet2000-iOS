@@ -4,6 +4,7 @@ import Foundation
 protocol HomeRepositoryProtocol {
   func fetchHomePage(currency: String) async throws -> HomePageResponse
   func getRoboSepetDetail(portfolioId: Int, completion: @escaping (Result<RoboSepetDetailResponse, Alamofire.AFError>) -> Void)
+  func toggleFavouriteRobofund(robofundCode: String, completion: @escaping (Result<Void, Alamofire.AFError>) -> Void)
 }
 
 final class HomeRepository: HomeRepositoryProtocol {
@@ -85,6 +86,21 @@ final class HomeRepository: HomeRepositoryProtocol {
                 }
             case .failure(let afError):
                 completion(.failure(afError))
+            }
+        }
+  }
+
+  func toggleFavouriteRobofund(robofundCode: String, completion: @escaping (Result<Void, AFError>) -> Void) {
+    let url = "https://api.finnet2000.com/api/Favourites/AddOrDeleteFavouriteRobofund"
+    NetworkManager.shared.authedSession
+        .request(url, method: .get, parameters: ["robofundCode": robofundCode])
+        .validate(statusCode: 200..<300)
+        .response { response in
+            switch response.result {
+            case .success:
+                completion(.success(()))
+            case .failure(let error):
+                completion(.failure(error))
             }
         }
   }

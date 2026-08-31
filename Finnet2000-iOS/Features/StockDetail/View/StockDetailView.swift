@@ -10,6 +10,7 @@ struct StockDetailView: View {
     @State private var selectedSubTab = ""
     @State private var showAlarm = false
     @State private var navigateToMatriksBridge = false
+    @State private var showPozisyonAc = false
 
     // MARK: - Filter States for Finansallar
     @State private var bilancoDonem = "Yıllık"
@@ -77,6 +78,14 @@ struct StockDetailView: View {
                 .presentationDragIndicator(.visible)
                 .presentationCornerRadius(28)
         }
+        .sheet(isPresented: $showPozisyonAc) {
+            PozisyonAcSheet(stockCode: viewModel.symbol) {
+                showPozisyonAc = false
+            }
+            .presentationDetents([.medium, .large])
+            .presentationDragIndicator(.visible)
+            .presentationCornerRadius(28)
+        }
         .navigationDestination(isPresented: $navigateToMatriksBridge) {
             MatriksBridgeView(
                 stockSymbol: viewModel.symbol,
@@ -111,11 +120,16 @@ struct StockDetailView: View {
                 .buttonStyle(.plain)
                 Spacer()
                 HStack(spacing: 2) {
-                    Button { navigateToMatriksBridge = true } label: {
-                        sdNavButton("doc.text")
+                    Button { showPozisyonAc = true } label: {
+                        sdNavButton("briefcase.fill") // Simgesi portföy olduğunu belli edecek şekilde güncellendi
                     }
                     .buttonStyle(.plain)
-                    sdNavButton("heart")
+                    Button {
+                        viewModel.toggleFavorite(stockCode: stockCode)
+                    } label: {
+                        sdNavButton(viewModel.isFavorite ? "heart.fill" : "heart", iconColor: viewModel.isFavorite ? Color.sdGreen : Color.primary)
+                    }
+                    .buttonStyle(.plain)
                     Button { showAlarm = true } label: {
                         sdNavButton("bell")
                     }
@@ -165,10 +179,10 @@ struct StockDetailView: View {
 
     }
 
-    private func sdNavButton(_ systemName: String) -> some View {
+    private func sdNavButton(_ systemName: String, iconColor: Color = Color.primary) -> some View {
         Image(systemName: systemName)
             .font(.system(size: 16, weight: .semibold))
-            .foregroundStyle(Color.primary)
+            .foregroundStyle(iconColor)
             .frame(width: 40, height: 40)
             .background(Color.sdPrimaryBackground,
                         in: RoundedRectangle(cornerRadius: 12, style: .continuous))

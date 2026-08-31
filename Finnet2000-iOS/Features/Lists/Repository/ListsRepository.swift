@@ -25,6 +25,52 @@ final class ListsRepository {
                 completion(response.result)
             }
     }
+    
+    func getPortfoliosInfo(completion: @escaping (Result<[PortfolioInfo], AFError>) -> Void) {
+        let url = "https://api.finnet2000.com/api/Portfolio/PortfoliosInfo"
+
+        NetworkManager.shared.authedSession
+            .request(url, method: .get)
+            .validate(statusCode: 200..<300)
+            .responseDecodable(of: [PortfolioInfo].self) { response in
+                completion(response.result)
+            }
+    }
+    
+    func getPortfolioStockPrice(code: String, date: String, completion: @escaping (Result<Double, Error>) -> Void) {
+        let url = "https://api.finnet2000.com/api/Portfolio/PortfolioStockPrice"
+        
+        let parameters: [String: Any] = [
+            "code": code,
+            "date": date
+        ]
+        
+        NetworkManager.shared.authedSession
+            .request(url, method: .post, parameters: parameters, encoding: JSONEncoding.default)
+            .validate(statusCode: 200..<300)
+            .responseString { response in
+                switch response.result {
+                case .success(let str):
+                    // Direct number string?
+                    let cleanStr = str.trimmingCharacters(in: .whitespacesAndNewlines).replacingOccurrences(of: "\"", with: "").replacingOccurrences(of: ",", with: ".")
+                    if let val = Double(cleanStr) {
+                        completion(.success(val))
+                        return
+                    }
+                    // JSON dictionary fallback
+                    if let data = str.data(using: .utf8),
+                       let dict = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+                        if let val = (dict["price"] ?? dict["value"] ?? dict.values.first) as? Double {
+                            completion(.success(val))
+                            return
+                        }
+                    }
+                    completion(.failure(NSError(domain: "", code: 0, userInfo: [NSLocalizedDescriptionKey: "Yanıt: \(str)"])))
+                case .failure(let error):
+                    completion(.failure(error))
+                }
+            }
+    }
 
     func getPortfolioDetail(portfolioId: Int,
                             completion: @escaping (Result<APIPortfolioDetailResponse, AFError>) -> Void) {

@@ -229,27 +229,30 @@ private struct BannerCardView: View {
   }
 }
 
+// View dışında sabit bir timer tanımlıyoruz. Böylece View her güncellendiğinde timer sıfırlanmaz.
+private let sharedTickerTimer = Timer.publish(every: 3.0, on: .main, in: .common).autoconnect()
+
 private struct TickerGridView: View {
   let liveStocks: [String: StockData]
-  @State private var offsetIndex = 0
+  // Her sütun için ayrı bir offset takip ediyoruz, böylece dalga efekti kusursuz çalışır
+  @State private var offsetIndices: [Int] = [0, 0, 0, 0]
+  @State private var frozenStocks: [String: StockData] = [:]
 
   private let allCodes = StockWebSocketManager.indexCodes
   private var row1Codes: [String] { Array(allCodes[0..<16]) }
   private var row2Codes: [String] { Array(allCodes[16..<32]) }
-
-  // 1 saniyede bir kaydır
-  let timer = Timer.publish(every: 1.0, on: .main, in: .common).autoconnect()
 
   var body: some View {
     VStack(spacing: 8) {
       // Satır 1
       HStack(spacing: 8) {
           ForEach(0..<4, id: \.self) { colIdx in
-              let actualIdx = (offsetIndex + colIdx) % 16
+              let actualIdx = (offsetIndices[colIdx] + colIdx) % 16
               let code = row1Codes[actualIdx]
-              LiveTickerItemView(code: code, data: liveStocks[code])
+              
+              LiveTickerItemView(code: code, data: frozenStocks[code])
                   .frame(maxWidth: .infinity)
-                  .id(code) // id ile kartların pozisyon değişimi takip edilir
+                  .id(code) // İçerik değiştiğinde transition tetiklenir
                   .transition(.asymmetric(
                       insertion: .move(edge: .leading).combined(with: .opacity),
                       removal: .move(edge: .trailing).combined(with: .opacity)
@@ -260,9 +263,10 @@ private struct TickerGridView: View {
       // Satır 2
       HStack(spacing: 8) {
           ForEach(0..<4, id: \.self) { colIdx in
-              let actualIdx = (offsetIndex + colIdx) % 16
+              let actualIdx = (offsetIndices[colIdx] + colIdx) % 16
               let code = row2Codes[actualIdx]
-              LiveTickerItemView(code: code, data: liveStocks[code])
+              
+              LiveTickerItemView(code: code, data: frozenStocks[code])
                   .frame(maxWidth: .infinity)
                   .id(code)
                   .transition(.asymmetric(
@@ -276,10 +280,28 @@ private struct TickerGridView: View {
     .padding(.vertical, 16)
     .background(Color(.systemGray6))
     .clipped()
-    .onReceive(timer) { _ in
-        withAnimation(.easeInOut(duration: 0.5)) {
-            // Sağa doğru kayması için offset azalarak geriye gitmeli
-            offsetIndex = (offsetIndex - 1 + 16) % 16
+    .onAppear {
+        if frozenStocks.isEmpty {
+            frozenStocks = liveStocks
+        }
+    }
+    .onChange(of: liveStocks.count) { _ in
+        // Websocket'ten ilk veri geldiğinde anında ekranda göster (3 saniye beklememek için)
+        if frozenStocks.isEmpty {
+            frozenStocks = liveStocks
+        }
+    }
+    .onReceive(sharedTickerTimer) { _ in
+        // onReceive, view her güncellendiğinde güncel liveStocks'u kullanır. Stale (bayat) kalmaz.
+        frozenStocks = liveStocks
+        
+        // Dalga efekti için her bir sütunu 100ms (0.1 sn) arayla tetikliyoruz
+        for i in 0..<4 {
+            DispatchQueue.main.asyncAfter(deadline: .now() + Double(i) * 0.1) {
+                withAnimation(.easeInOut(duration: 0.5)) {
+                    offsetIndices[i] = (offsetIndices[i] - 1 + 16) % 16
+                }
+            }
         }
     }
   }
