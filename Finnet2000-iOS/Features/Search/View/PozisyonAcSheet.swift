@@ -14,6 +14,7 @@ struct PozisyonAcSheet: View {
     @State private var price = ""
     @State private var quantity = "0"
     @State private var commission = ""
+    @State private var isSaving = false
 
     private let accentGreen = Color(red: 0.18, green: 0.72, blue: 0.40)
     private let fieldBg     = Color(UIColor.secondarySystemGroupedBackground)
@@ -184,19 +185,29 @@ struct PozisyonAcSheet: View {
 
             // MARK: - Kaydet butonu
             Button {
-                onClose()
+                savePosition()
             } label: {
-                Text("Kaydet")
-                    .font(.system(size: 17, weight: .semibold))
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 54)
-                    .background(
-                        canSave ? accentGreen : Color(UIColor.systemGray3),
-                        in: RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    )
+                if isSaving {
+                    ProgressView().tint(.white)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 54)
+                        .background(
+                            canSave ? accentGreen : Color(UIColor.systemGray3),
+                            in: RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        )
+                } else {
+                    Text("Kaydet")
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 54)
+                        .background(
+                            canSave ? accentGreen : Color(UIColor.systemGray3),
+                            in: RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        )
+                }
             }
-            .disabled(!canSave || selectedPortfolio == nil)
+            .disabled(!canSave || selectedPortfolio == nil || isSaving)
             .padding(.horizontal, 20)
             .padding(.bottom, 40)
         }
@@ -264,6 +275,43 @@ struct PozisyonAcSheet: View {
             .foregroundColor(.secondary)
             .textCase(.uppercase)
             .tracking(0.4)
+    }
+
+    private func parseDouble(_ text: String) -> Double {
+        let cleanText = text.replacingOccurrences(of: ",", with: ".")
+        return Double(cleanText) ?? 0.0
+    }
+
+    private func savePosition() {
+        guard let portfolioId = selectedPortfolio?.portfolioId else { return }
+        
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = TimeZone(secondsFromGMT: 0)
+        let dateString = formatter.string(from: selectedDate)
+        
+        let request = AddPositionRequest(
+            portfolioId: portfolioId,
+            code: stockCode,
+            buyQuantity: parseDouble(quantity),
+            buyDate: dateString,
+            buyPrice: parseDouble(price),
+            commission: parseDouble(commission)
+        )
+        
+        isSaving = true
+        ListsRepository().addPosition(request: request) { result in
+            DispatchQueue.main.async {
+                isSaving = false
+                switch result {
+                case .success:
+                    onClose()
+                case .failure(let error):
+                    print("Pozisyon eklenemedi: \(error)")
+                }
+            }
+        }
     }
 }
 

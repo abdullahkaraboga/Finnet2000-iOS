@@ -1,6 +1,15 @@
 import Foundation
 import Alamofire
 
+struct AddPositionRequest: Codable, Sendable {
+    let portfolioId: Int
+    let code: String
+    let buyQuantity: Double
+    let buyDate: String
+    let buyPrice: Double
+    let commission: Double
+}
+
 final class ListsRepository {
 
     func getFavouriteList(completion: @escaping (Result<FavouriteListResponse, AFError>) -> Void) {
@@ -66,6 +75,31 @@ final class ListsRepository {
                         }
                     }
                     completion(.failure(NSError(domain: "", code: 0, userInfo: [NSLocalizedDescriptionKey: "Yanıt: \(str)"])))
+                case .failure(let error):
+                    completion(.failure(error))
+                }
+            }
+    }
+
+    func addPosition(request: AddPositionRequest, completion: @escaping (Result<Void, Error>) -> Void) {
+        let url = "https://api.finnet2000.com/api/Portfolio/AddPosition"
+        
+        let parameters: [String: Any] = [
+            "portfolioId": request.portfolioId,
+            "code": request.code,
+            "buyQuantity": request.buyQuantity,
+            "buyDate": request.buyDate,
+            "buyPrice": request.buyPrice,
+            "commission": request.commission
+        ]
+        
+        NetworkManager.shared.authedSession
+            .request(url, method: .post, parameters: parameters, encoding: JSONEncoding.default)
+            .validate(statusCode: 200..<300)
+            .response { response in
+                switch response.result {
+                case .success:
+                    completion(.success(()))
                 case .failure(let error):
                     completion(.failure(error))
                 }
